@@ -110,6 +110,19 @@ export type Intersection = {
 	Position: Vector3,
 }
 
+export type Modifier = {
+	Loss: number?,
+	Power: number?,
+	Angle: number?,
+	
+	Gravity: number?,
+	Velocity: number?,
+	Lifetime: number?,
+
+	Output: BindableEvent?,
+	RaycastFilter: RaycastParams?,
+}
+
 export type Projectile = {
 	--> Information
 	Type: string,
@@ -132,6 +145,7 @@ export type Projectile = {
 	Lifetime: number,
 	Timestamp: number,
 	
+	Output: BindableEvent?,
 	RaycastFilter: RaycastParams,
 	IncludeFilter: RaycastParams,
 	
@@ -152,9 +166,12 @@ export type Definition = {
 	Lifetime: number,
 	RaycastFilter: RaycastParams?,
 	
-	OnImpact: (Player: Player, Direction: Vector3, Instance: Instance, Normal: Vector3, Position: Vector3, Material: Enum.Material) -> (), --> Called when the projectile hits something in the world
-	OnDestroyed: (Player: Player, Position: Vector3) -> (), --> Called when the projectile is destroyed
-	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3) -> (), --> Called whenever a player hitbox is intersected [SERVER SIDE ONLY]
+	--> Called when the projectile hits something in the world
+	OnImpact: (Player: Player, Direction: Vector3, Instance: Instance, Normal: Vector3, Position: Vector3, Material: Enum.Material) -> (), 
+	--> Called when the projectile is destroyed
+	OnDestroyed: (Player: Player, Position: Vector3) -> (),
+	--> Called whenever a player hitbox is intersected [SERVER SIDE ONLY]
+	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3) -> (), 
 }
 
 ---- Constants ----
@@ -162,7 +179,6 @@ export type Definition = {
 local Terrain = workspace.Terrain
 local Visuals = workspace.Visuals
 local Characters = workspace.Characters
-local LocalPlayer = Players.LocalPlayer
 local ProjectileInstances = SecureCast.Projectiles
 
 local Simulation = {}
@@ -203,7 +219,7 @@ local function IncrementTasks(Amount: number)
 	Actor:SetAttribute("Tasks", Actor:GetAttribute("Tasks") + Amount)
 end
 
-local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
+local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number, Begin, End): Intersection?
 	--> Retrieve previous & next snapshot
 	local NextSnapshot: Snapshot?;
 	local PreviousSnapshot: Snapshot?;
@@ -508,12 +524,14 @@ local function OnPostSimulation()
 	
 	--> Process impacts:
 	for Projectile, RaycastResult in Impacted do
+		local Bindable = Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
 		Bindable:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
 	end
 	
 	--> Process intersected:
 	for Projectile, Interesction in Intersected do
+		local Bindable = Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
 		Bindable:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
 	end
@@ -524,6 +542,7 @@ local function OnPostSimulation()
 	for Index, Projectile in Destroyed do
 		--> Only send events for owned projectiles
 		if Projectile.Caster.Parent == Players then
+			local Bindable = Projectile.Output or Bindable
 			Bindable:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
 		end
 		
@@ -548,7 +567,7 @@ function Simulation.Initialize(ActorInstance: Actor)
 	Simulation.ImportDefentions()
 	
 	--> Connections
-	Actor.Input.OnInvoke = Simulation.Simulate
+	Actor:BindToMessage("Dispatch", Simulation.Simulate)
 	RunService.PostSimulation:ConnectParallel(OnPostSimulation)
 	
 	if IS_CLIENT then 
@@ -560,7 +579,7 @@ function Simulation.Process(Type: string, Action: "OnImpact" | "OnDestroyed" | "
 	Definitions[Type][Action](Caster, ...)
 end
 
-function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?)
+function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?, Modifier: Modifier?)
 	if Direction.Magnitude > 1 then
 		Direction = Direction.Unit
 		--warn(`Direction must be normalized before passing to Simulate!`)
@@ -571,7 +590,16 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		error(`Unknown projectile type '{Type}'`)
 		return
 	end
+
+	--> Overwrite definition values with modifier values
+	if Modifier then
+		Definition = table.clone(Definition)
+		for Key, Value in Modifier do
+			Definition[Key] = Value
+		end
+	end
 	
+	--> Create raycast filters
 	local IncludeFilter = RaycastParams.new()
 	IncludeFilter.FilterType = Enum.RaycastFilterType.Include
 	
@@ -592,20 +620,21 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		end
 	end 
 	
+	--> Create projectile visual
 	local PVInstance = IS_CLIENT and (PVInstance or ProjectileInstances:FindFirstChild(Type)) or nil
 	if PVInstance then
 		PVInstance = PVInstance:Clone()
 		PVInstance.Parent = Visuals
 	end
 	
-	local UUID = HttpService:GenerateGUID(false)
-	Projectiles[UUID] = {
+	IncrementTasks(1)
+	Projectiles[HttpService:GenerateGUID(false)] = {
 		Type = Type,
 		Caster = Player,
 
 		Origin = Origin,
 		Gravity = Vector3.new(0, Definition.Gravity, 0),
-		Velocity = Direction * Definition.Velocity,
+		Velocity = Direction * (Definition.Velocity),
 		Position = Origin,
 
 		Loss = Definition.Loss,
@@ -619,6 +648,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		Lifetime = Definition.Lifetime,
 		Timestamp = Timestamp,
 
+		Output = Definition.Output,
 		RaycastFilter = RaycastFilter,
 		IncludeFilter = IncludeFilter,
 
@@ -628,9 +658,6 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		Instance = PVInstance :: any,
 		Orientation = Vector3.new(),
 	}
-
-	IncrementTasks(1)
-	return UUID
 end
 
 function Simulation.ImportDefentions()

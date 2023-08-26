@@ -82,12 +82,12 @@ function Dispatcher:Allocate(Threads: number)
 end
 
 function Dispatcher:Dispatch(...)
-	local Threads = table.clone(self.Threads)
+	local Threads: {Actor} = table.clone(self.Threads)
 	table.sort(Threads, function(a: Actor, b: Actor)
 		return (a:GetAttribute("Tasks") < b:GetAttribute("Tasks"))
 	end)
 	
-	return Threads[1].Input:Invoke(...)
+	Threads[1]:SendMessage("Dispatch", ...)
 end
 
 ---- Initialization ----
@@ -99,10 +99,6 @@ do
 	local Output = Instance.new("BindableEvent")
 	Output.Name = "Output"
 	Output.Parent = Actor
-
-	local Input = Instance.new("BindableFunction")
-	Input.Name = "Input"
-	Input.Parent = Actor
 	
 	local Controller = (IS_SERVER and script.ServerController or script.ClientController):Clone()
 	Controller.Name = "Controller"

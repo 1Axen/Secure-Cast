@@ -25,6 +25,10 @@ local SimulateEvent = Events.Simulate
 
 ---- Variables ----
 
+local Modifier = {
+	Power = 1_000,
+}
+
 ---- Private Functions ----
 
 ---- Public Functions ----
@@ -49,6 +53,7 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 		return
 	end
 	
-	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction)
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency)
+	--> WARNING: Make sure to replicate your modifier to the client as well or the simulation will desync
+	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, Modifier)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, Modifier)
 end)

@@ -40,7 +40,7 @@ function SecureCast.Initialize(Threads: number?)
     SimulationDispatcher = Dispatcher.new(Threads or DEFAULT_THREADS, script.Simulation, Simulation.Process)
 end
 
-function SecureCast.Cast(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?, Modifier: Simulation.Modifier)
+function SecureCast.Cast(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?, Modifier: Simulation.Modifier?)
     assert(SimulationDispatcher, "You must call SecureCast.Initialize before calling SecureCast.Cast!")
     SimulationDispatcher:Dispatch(Caster, Type, Origin, Direction, Timestamp, PVInstance, Modifier)
 end

@@ -65,7 +65,7 @@ function Dispatcher:Allocate(Threads: number)
 		local Actor = Template:Clone()
 		Actor.Parent = Container
 		Actor.Controller.Enabled = true
-		Actor.Result.Event:Connect(self.Callback)
+		Actor.Output.Event:Connect(self.Callback)
 		table.insert(Actors, Actor)
 	end
 	
@@ -87,7 +87,7 @@ function Dispatcher:Dispatch(...)
 		return (a:GetAttribute("Tasks") < b:GetAttribute("Tasks"))
 	end)
 	
-	Threads[1]:SendMessage("Dispatch", ...)
+	return Threads[1].Input:Invoke(...)
 end
 
 ---- Initialization ----
@@ -96,9 +96,13 @@ do
 	local Actor = Instance.new("Actor")
 	Actor:SetAttribute("Tasks", 0)
 	
-	local Bindable = Instance.new("BindableEvent")
-	Bindable.Name = "Result"
-	Bindable.Parent = Actor
+	local Output = Instance.new("BindableEvent")
+	Output.Name = "Output"
+	Output.Parent = Actor
+
+	local Input = Instance.new("BindableFunction")
+	Input.Name = "Input"
+	Input.Parent = Actor
 	
 	local Controller = (IS_SERVER and script.ServerController or script.ClientController):Clone()
 	Controller.Name = "Controller"

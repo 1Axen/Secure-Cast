@@ -163,7 +163,7 @@ local Terrain = workspace.Terrain
 local Visuals = workspace.Visuals
 local Characters = workspace.Characters
 local LocalPlayer = Players.LocalPlayer
-local ProjectileInstances = ReplicatedStorage.Projectiles
+local ProjectileInstances = SecureCast.Projectiles
 
 local Simulation = {}
 
@@ -544,11 +544,11 @@ function Simulation.Initialize(ActorInstance: Actor)
 	--> Initialize
 	LastTick = os.clock()
 	Actor = ActorInstance
-	Bindable = ActorInstance:FindFirstChild("Result") :: BindableEvent
+	Bindable = ActorInstance.Output
 	Simulation.ImportDefentions()
 	
 	--> Connections
-	Actor:BindToMessage("Dispatch", Simulation.Simulate)
+	Actor.Input.OnInvoke = Simulation.Simulate
 	RunService.PostSimulation:ConnectParallel(OnPostSimulation)
 	
 	if IS_CLIENT then 
@@ -598,8 +598,8 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		PVInstance.Parent = Visuals
 	end
 	
-	IncrementTasks(1)
-	Projectiles[HttpService:GenerateGUID(false)] = {
+	local UUID = HttpService:GenerateGUID(false)
+	Projectiles[UUID] = {
 		Type = Type,
 		Caster = Player,
 
@@ -628,6 +628,9 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		Instance = PVInstance :: any,
 		Orientation = Vector3.new(),
 	}
+
+	IncrementTasks(1)
+	return UUID
 end
 
 function Simulation.ImportDefentions()

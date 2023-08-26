@@ -13,10 +13,6 @@
   
         "Events": {
           "$path": "src/shared/Events"
-        },
-  
-        "Projectiles": {
-          "$path": "src/shared/Projectiles"
         }
       },
   

@@ -35,7 +35,6 @@ local SimulationDispatcher;
 
 function SecureCast.Initialize(Threads: number?)
     assert(SimulationDispatcher == nil, "SecureCast.Initialize can only be called once per execution context!")
-    assert(ReplicatedStorage:FindFirstChild("Projectiles"), "Projectiles folder is missing from ReplicatedStorage!")
 
     Simulation.ImportDefentions()
     SimulationDispatcher = Dispatcher.new(Threads or DEFAULT_THREADS, script.Simulation, Simulation.Process)

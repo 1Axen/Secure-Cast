@@ -1,6 +1,8 @@
-# Project place file
-/Secure-Cast.rbxlx
+# Editor Settings
+.vscode/**
 
-# Roblox Studio lock files
-/*.rbxlx.lock
-/*.rbxl.lock
+# Roblox File types
+*.rbxlx
+*.rbxl
+*.rbxl.lock
+*.rbxmx

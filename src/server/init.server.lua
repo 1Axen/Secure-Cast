@@ -12,10 +12,7 @@ local RunService = game:GetService("RunService")
 
 ---- Imports ----
 
-local SecureCast = ReplicatedStorage.SecureCast
-
-local Dispatcher = require(SecureCast.Dispatcher)
-local Simulation = require(SecureCast.Simulation)
+local SecureCast = require(ReplicatedStorage.SecureCast)
 
 ---- Settings ----
 
@@ -26,8 +23,6 @@ local MAXIMUM_LATENCY = 0.8 -- 800 ms
 local Events = ReplicatedStorage.Events
 local SimulateEvent = Events.Simulate
 
-local SimulationDispatcher = Dispatcher.new(4, SecureCast.Simulation, Simulation.Process)
-
 ---- Variables ----
 
 ---- Private Functions ----
@@ -37,7 +32,7 @@ local SimulationDispatcher = Dispatcher.new(4, SecureCast.Simulation, Simulation
 ---- Initialization ----
 
 --> Only call once per context
-Simulation.ImportDefentions()
+SecureCast.Initialize()
 
 ---- Connections ----
 
@@ -55,5 +50,5 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 	end
 	
 	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction)
-	SimulationDispatcher:Dispatch(Player, "Bullet", Origin, Direction, os.clock() - Latency)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency)
 end)

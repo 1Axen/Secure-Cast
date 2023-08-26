@@ -1,6 +1,58 @@
 {
-  "name": "Secure-Cast",
-  "tree": {
-    "$path": "src/shared/SecureCast"
+    "name": "Secure-Cast",
+    
+    "tree": {
+      "$className": "DataModel",
+  
+      "ReplicatedStorage": {
+        "$className": "ReplicatedStorage",
+  
+        "SecureCast": {
+          "$path": "src/shared/SecureCast"
+        },
+  
+        "Events": {
+          "$path": "src/shared/Events"
+        },
+  
+        "Projectiles": {
+          "$path": "src/shared/Projectiles"
+        }
+      },
+  
+      "ServerScriptService": {
+        "Server": {
+          "$path": "src/server"
+        }
+      },
+  
+      "StarterPlayer": {
+        "StarterPlayerScripts": {
+          "Client": {
+            "$path": "src/client"
+          }
+        }
+      },
+  
+      "Workspace": {
+        "$properties": {
+          "FilteringEnabled": true
+        },
+
+        "Map": {
+          "$className": "Folder"
+        },
+
+        "Visuals": {
+          "$className": "Folder",
+          "Draw": {
+            "$className": "Folder"
+          }
+        },
+
+        "Characters": {
+          "$className": "Folder"
+        }
+      }
+    }
   }
-}

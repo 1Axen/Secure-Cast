@@ -12,10 +12,7 @@ local UserInputService = game:GetService("UserInputService")
 
 ---- Imports ----
 
-local SecureCast = ReplicatedStorage.SecureCast
-
-local Dispatcher = require(SecureCast.Dispatcher)
-local Simulation = require(SecureCast.Simulation)
+local SecureCast = require(ReplicatedStorage.SecureCast)
 
 ---- Settings ----
 
@@ -27,8 +24,6 @@ local Mouse = Player:GetMouse()
 local Events = ReplicatedStorage.Events
 local SimulateEvent = Events.Simulate
 
-local SimulationDispacther = Dispatcher.new(4, SecureCast.Simulation, Simulation.Process)
-
 ---- Variables ----
 
 ---- Private Functions ----
@@ -38,7 +33,7 @@ local SimulationDispacther = Dispatcher.new(4, SecureCast.Simulation, Simulation
 ---- Initialization ----
 
 --> Only call once per context
-Simulation.ImportDefentions()
+SecureCast.Initialize()
 
 ---- Connections ----
 
@@ -57,11 +52,11 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
 	local Direction = (Mouse.Hit.Position - Origin).Unit
 	
 	SimulateEvent:FireServer(Origin, Direction, workspace:GetServerTimeNow())
-	SimulationDispacther:Dispatch(Player, "Bullet", Origin, Direction, os.clock())
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock())
 end)
 
-SimulateEvent.OnClientEvent:Connect(function(Owner: Player, Type: string, Origin: Vector3, Direction: Vector3)
-	if Owner ~= Player then
-		SimulationDispacther:Dispatch(Owner, Type, Origin, Direction, os.clock())
+SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3)
+	if Caster ~= Player then
+		SecureCast.Cast(Caster, Type, Origin, Direction, os.clock())
 	end
 end)

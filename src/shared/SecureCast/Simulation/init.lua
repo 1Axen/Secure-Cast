@@ -91,7 +91,6 @@ local MAXIMUM_SIMULATION_TIME = 0.003 --> The maximum amount of time in seconds 
 
 local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Include
-RAYCAST_PARAMS.CollisionGroup = "Defualt"
 RAYCAST_PARAMS.FilterDescendantsInstances = {workspace.Map, workspace.Terrain, workspace.Characters}
 
 export type Record = {
@@ -114,7 +113,7 @@ export type Intersection = {
 export type Projectile = {
 	--> Information
 	Type: string,
-	Owner: Player,
+	Caster: Player,
 
 	--> Simulation
 	Origin: Vector3,
@@ -204,7 +203,7 @@ local function IncrementTasks(Amount: number)
 	Actor:SetAttribute("Tasks", Actor:GetAttribute("Tasks") + Amount)
 end
 
-local function RaycastPlayers(Owner: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
+local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
 	--> Retrieve previous & next snapshot
 	local NextSnapshot: Snapshot?;
 	local PreviousSnapshot: Snapshot?;
@@ -238,7 +237,7 @@ local function RaycastPlayers(Owner: Player, Origin: Vector3, Direction: Vector3
 		local PreviousRecord: Record = PreviousRecords[Player]
 		
 		--> Avoid checking teammates
-		if Player.Team == Owner.Team then
+		if Player.Team == Caster.Team then
 			continue
 		end
 		
@@ -400,8 +399,8 @@ local function OnPostSimulation()
 		local Destroy = false
 		
 		--> Don't simulate projectiles without owners
-		local Owner = Projectile.Owner
-		if Owner.Parent ~= Players then
+		local Caster = Projectile.Caster
+		if Caster.Parent ~= Players then
 			Projectiles[Identifier] = nil
 			table.insert(Destroyed, Projectile)
 			continue
@@ -426,7 +425,7 @@ local function OnPostSimulation()
 			local Intersection: Intersection?;
 			if Projectile.PlayerCollisions then
 				--> We only need to check up to the raycast intersection
-				Intersection = RaycastPlayers(Owner, Origin, (RaycastPosition - Origin), Projectile.Timestamp + Time)
+				Intersection = RaycastPlayers(Caster, Origin, (RaycastPosition - Origin), Projectile.Timestamp + Time)
 				
 				if Intersection then
 					Destroy = true
@@ -447,7 +446,7 @@ local function OnPostSimulation()
 					local Character = Humanoid and Humanoid.Parent
 					local Victim = Character and Players:FindFirstChild(Character.Name)
 					if Victim then
-						if Victim.Team ~= Owner.Team then
+						if Victim.Team ~= Caster.Team then
 							Destroy = true
 						else
 							RaycastResult = nil --> Prevent OnImpact event
@@ -510,13 +509,13 @@ local function OnPostSimulation()
 	--> Process impacts:
 	for Projectile, RaycastResult in Impacted do
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Bindable:Fire(Projectile.Type, "OnImpact", Projectile.Owner, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
+		Bindable:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
 	end
 	
 	--> Process intersected:
 	for Projectile, Interesction in Intersected do
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Bindable:Fire(Projectile.Type, "OnIntersection", Projectile.Owner, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
+		Bindable:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
 	end
 	
 	--> Process destroyed:
@@ -524,8 +523,8 @@ local function OnPostSimulation()
 	--> of multiple events per single projectile
 	for Index, Projectile in Destroyed do
 		--> Only send events for owned projectiles
-		if Projectile.Owner.Parent == Players then
-			Bindable:Fire(Projectile.Type, "OnDestroyed", Projectile.Owner, Projectile.Position)
+		if Projectile.Caster.Parent == Players then
+			Bindable:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
 		end
 		
 		if IS_CLIENT then
@@ -557,14 +556,14 @@ function Simulation.Initialize(ActorInstance: Actor)
 	end
 end
 
-function Simulation.Process(Type: string, Action: "OnImpact" | "OnDestroyed" | "OnIntersection", Owner: Player, ...)
-	Definitions[Type][Action](Owner, ...)
+function Simulation.Process(Type: string, Action: "OnImpact" | "OnDestroyed" | "OnIntersection", Caster: Player, ...)
+	Definitions[Type][Action](Caster, ...)
 end
 
 function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?)
 	if Direction.Magnitude > 1 then
 		Direction = Direction.Unit
-		warn(`Direction must be normalized before passing to Simulate!`)
+		--warn(`Direction must be normalized before passing to Simulate!`)
 	end
 	
 	local Definition = Definitions[Type]
@@ -602,7 +601,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 	IncrementTasks(1)
 	Projectiles[HttpService:GenerateGUID(false)] = {
 		Type = Type,
-		Owner = Player,
+		Caster = Player,
 
 		Origin = Origin,
 		Gravity = Vector3.new(0, Definition.Gravity, 0),

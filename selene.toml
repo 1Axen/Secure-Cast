@@ -1,6 +1,0 @@
-std = "luau+roblox"
-
-exclude = ["luneTypes.d.luau"]
-
-[lints]
-high_cyclomatic_complexity = "warn"

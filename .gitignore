@@ -1,8 +1,0 @@
-# Editor Settings
-.vscode/**
-
-# Roblox File types
-*.rbxlx
-*.rbxl
-*.rbxl.lock
-*.rbxmx

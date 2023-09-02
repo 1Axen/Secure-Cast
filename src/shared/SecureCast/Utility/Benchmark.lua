@@ -107,28 +107,28 @@ function Utility.Benchmark(Label: string, Samples: number, Closure: (Begin: (Tag
 	print(`99th Percentile: {Format(Results[Index99th])}`)
 	
 	for Tag, Information in Tags do
-		local Calls = Information.Calls
 		local Times = Information.Times
+		local TagCalls = Information.Calls
 		
-		local Total = 0
-		local Samples = #Times
+		local TagTotal = 0
+		local TagSamples = #Times
 		for Index, Time in Times do
-			Total += Time
+			TagTotal += Time
 			Rest()
 		end
 		
 		task.wait()
 		
 		local TotalCalls = 0
-		local CallsSamples = #Calls
-		for Index, Amount in Calls do
+		local CallsSamples = #TagCalls
+		for Index, Amount in TagCalls do
 			TotalCalls += Amount
 			Rest()
 		end
 		
 		task.wait()
 		
-		table.sort(Calls, function(a, b)
+		table.sort(TagCalls, function(a, b)
 			return b > a
 		end)
 		
@@ -138,15 +138,15 @@ function Utility.Benchmark(Label: string, Samples: number, Closure: (Begin: (Tag
 			return b > a
 		end)
 		
-		local TimeIndex50th = math.max(math.floor(Samples / 2), 1)	
-		local TimeIndex95th = math.max(math.floor(Samples * 0.95), 1)
-		local TimeIndex99th = math.max(math.floor(Samples * 0.99), 1)
+		local TimeIndex50th = math.max(math.floor(TagSamples / 2), 1)	
+		local TimeIndex95th = math.max(math.floor(TagSamples * 0.95), 1)
+		local TimeIndex99th = math.max(math.floor(TagSamples * 0.99), 1)
 		local CallsIndex50th = math.max(math.floor(CallsSamples / 2), 1)	
 		
 		warn(`TAG: {Tag}`)
-		print(`	Sample Time: {Format(Times[TimeIndex50th] * Calls[CallsIndex50th])}`)
+		print(`	Sample Time: {Format(Times[TimeIndex50th] * TagCalls[CallsIndex50th])}`)
 		--print(`	Fastest Time: {Format(Times[1])}`)
-		print(`	Average Time: {Format(Total / Samples)}`)
+		print(`	Average Time: {Format(TagTotal / TagSamples)}`)
 		--print(`	Average Calls: {TotalCalls / CallsSamples}`)
 		print(`	50th Percentile: {Format(Times[TimeIndex50th])}`)
 		--print(`	95th Percentile: {Format(Times[TimeIndex95th])}`)

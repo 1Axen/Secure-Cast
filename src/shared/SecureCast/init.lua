@@ -6,18 +6,12 @@
 
 ---- Services ----
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
 ---- Imports ----
 
 local Dispatcher = require(script.Dispatcher)
 local Simulation = require(script.Simulation)
 
 ---- Settings ----
-
-local IS_SERVER = RunService:IsServer()
-local IS_CLIENT = RunService:IsClient()
 
 local DEFAULT_THREADS = 9
 

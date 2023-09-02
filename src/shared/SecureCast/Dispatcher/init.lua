@@ -43,16 +43,16 @@ function Dispatcher.new(Threads: number, Module: ModuleScript, Callback: (...any
 	assert(typeof(Module) == "Instance" and Module:IsA("ModuleScript"), "Invalid argument #1 to 'Dispatcher.new', module must be a module script.")
 	assert(type(Threads) == "number" and Threads > 0, "Invalid argument #2 to 'Dispatcher.new', threads must be a positive integer.")
 	
-	local Dispatcher: Dispatcher = setmetatable({
+	local self: Dispatcher = setmetatable({
 		Module = Module,
 		Threads = {},
 		Callback = Callback,
 	} :: any, Dispatcher)
 	
 	--> Allocate initial threads
-	Dispatcher:Allocate(Threads)
+	self:Allocate(Threads)
 	
-	return Dispatcher
+	return self
 end
 
 function Dispatcher:Allocate(Threads: number)

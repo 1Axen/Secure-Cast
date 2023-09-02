@@ -1,4 +1,5 @@
 --!strict
+--!native
 --!optimize 2
 
 -- ******************************* --
@@ -8,11 +9,8 @@
 ---- Services ----
 
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local PhysicsService = game:GetService("PhysicsService")
 local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 ---- Imports ----
 
@@ -88,7 +86,8 @@ local PARTS_SIZE = #PARTS
 local HITBOX_SIZE = (Vector3.new(6, 6, 6) / 2)
 local SNAPSHOT_LIFETIME = 1
 
-local MAXIMUM_SIMULATION_TIME = 0.003 --> The maximum amount of time in seconds a thread/worker is allowed to run the simulation for
+local SERVER_FRAME_RATE = (1 / 60) --> Do not touch!
+local REMAINING_FRAME_TIME_RATIO = 0.5 --> What percentage of the remaining frame time we can use to run the simulation
 
 local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Include
@@ -122,6 +121,8 @@ export type Modifier = {
 
 	Output: BindableEvent?,
 	RaycastFilter: RaycastParams?,
+
+	[string]: any,
 }
 
 export type Projectile = {
@@ -163,8 +164,9 @@ export type Definition = {
 	
 	Gravity: number,
 	Velocity: number,
-	
 	Lifetime: number,
+
+	Output: BindableEvent?,
 	RaycastFilter: RaycastParams?,
 	
 	--> Called when the projectile hits something in the world
@@ -182,11 +184,14 @@ local Visuals = workspace.Visuals
 local Characters = workspace.Characters
 local ProjectileInstances = SecureCast.Projectiles
 
+local NumberGenerator = Random.new()
+
 local Simulation = {}
 
 ---- Variables ----
 
 local LastTick;
+local FrameTick;
 
 local Actor: Actor;
 local Bindable: BindableEvent;
@@ -220,7 +225,7 @@ local function IncrementTasks(Amount: number)
 	Actor:SetAttribute("Tasks", Actor:GetAttribute("Tasks") + Amount)
 end
 
-local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number, Begin, End): Intersection?
+local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
 	--> Retrieve previous & next snapshot
 	local NextSnapshot: Snapshot?;
 	local PreviousSnapshot: Snapshot?;
@@ -254,9 +259,9 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		local PreviousRecord: Record = PreviousRecords[Player]
 		
 		--> Avoid checking teammates
-		if Player.Team == Caster.Team then
-			continue
-		end
+		--if Player.Team == Caster.Team then
+			--continue
+		--end
 		
 		--> Previous record is guaranteed to exist due to it being in the grid
 		if not NextRecord then
@@ -273,27 +278,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		for Index, Rotation in PreviousRecord.Parts do
 			local Size = SIZES[Index]
 			local Next = NextParts[Index]
-			
-			--> We don't interpolate the matrix here because it's sloooooooooow
-			--> From my benchmarking interpolating full matrix here
-			--> slows down the raycast by ~300 microseconds at 100 players
-			--> this is what no native cframe type does to a mf
-			local Position = Rotation.Position:Lerp(Next.Position, Fraction)
 
-			--> Discard phase: Axis-Aligned Bounding Box of complete hitbox bounds	
-			local Vector = (Position - Origin)
-			local Dot = Vector:Dot(Normalized)
-			local Point = (Origin + Normalized * Dot)
-			
-			local Bounds = BOUNDS[Index]
-			local Offset = (Position - Point)
-
-			if math.abs(Offset.X) > Bounds.X
-				or math.abs(Offset.Y) > Bounds.Y
-				or math.abs(Offset.Z) > Bounds.Z then
-				continue
-			end
-			
 			--> Narrowphase: Oriented Bounding Box
 			local Intersection = PhysicsUtility.RaycastOBB(
 				Length,
@@ -302,7 +287,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 				Size, 
 				Rotation:Lerp(Next, Fraction)
 			)
-			
+
 			if Intersection then
 				return {
 					Part = PARTS[Index],
@@ -318,7 +303,7 @@ end
 
 ---- Public Functions ----
 
-local function OnPreRender(deltaTime: number)
+local function OnPreRender()
 	local Parts: {BasePart} = {}
 	local CFrames: {CFrame} = {}
 
@@ -344,16 +329,21 @@ local function OnPreRender(deltaTime: number)
 	workspace:BulkMoveTo(Parts, CFrames, Enum.BulkMoveMode.FireCFrameChanged)
 end
 
+local function OnPreSimulation()
+	FrameTick = os.clock()
+end
+
 local function OnPostSimulation()
 	local Tick = os.clock()
-	local Delta = (Tick - LastTick)
-	
+	local DeltaTime = (Tick - LastTick)
+	local MaximumFrameTime = (SERVER_FRAME_RATE - (Tick - FrameTick)) * REMAINING_FRAME_TIME_RATIO
+
 	--> Take a snapshot of the latest player positions
 	if IS_SERVER then
 		--> Create new snapshot
 		local Voxels: {[Vector3]: Player} = {}
 		local Records: {[Player]: Record} = {}
-		
+
 		for Index, Player in Players:GetPlayers() do
 			local Character = Player.Character
 			if not Character then
@@ -369,11 +359,10 @@ local function OnPostSimulation()
 			
 			for Index, Name in PARTS do
 				local Part: BasePart = Character:FindFirstChild(Name)
-				if not Part then
-					break
+				if Part then
+					Parts[Index] = Part.CFrame
+					continue
 				end
-
-				Parts[Index] = Part.CFrame
 			end
 
 			if #Parts == PARTS_SIZE then
@@ -381,13 +370,13 @@ local function OnPostSimulation()
 				Voxels[Record.Position] = Player
 			end
 		end
-		
+
 		table.insert(Snapshots, {
 			Time = Tick,
 			Grid = VoxelsUtility.new(Voxels),
 			Records = Records,
 		})
-		
+
 		--> Remove expired snapshots (might be more than one!)
 		--> We must use a reverse loop here to avoid skipping over entries when removing
 		for Index = #Snapshots, 1, -1 do
@@ -405,11 +394,11 @@ local function OnPostSimulation()
 	local Impacted: {[Projectile]: RaycastResult} = {}
 	local Destroyed: {Projectile} = {}
 	local Intersected: {[Projectile]: Intersection} = {}
-	
+
 	--> Simulate Projectiles
 	for Identifier, Projectile in Projectiles do
-		if (os.clock() - Tick) > MAXIMUM_SIMULATION_TIME then
-			warn("Thread has elapsed all of it's allocated simulation time.")
+		if (os.clock() - Tick) > MaximumFrameTime then
+			--warn("Thread has used all of it's allocated simulation time.")
 			break
 		end
 		
@@ -424,8 +413,8 @@ local function OnPostSimulation()
 		end
 		
 		--> Increment timers
-		local Time = math.min(Projectile.Time + Delta, Projectile.Lifetime)
-		local Step = math.min(Projectile.Step + Delta, Time)
+		local Time = math.min(Projectile.Time + DeltaTime, Projectile.Lifetime)
+		local Step = math.min(Projectile.Step + DeltaTime, Time)
 		local Position = Projectile.Position
 		
 		--> Only simulate moving projectiles
@@ -525,16 +514,16 @@ local function OnPostSimulation()
 	
 	--> Process impacts:
 	for Projectile, RaycastResult in Impacted do
-		local Bindable = Projectile.Output or Bindable
+		local Output = Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Bindable:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
+		Output:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
 	end
 	
 	--> Process intersected:
 	for Projectile, Interesction in Intersected do
-		local Bindable = Projectile.Output or Bindable
+		local Output = Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Bindable:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
+		Output:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
 	end
 	
 	--> Process destroyed:
@@ -543,8 +532,8 @@ local function OnPostSimulation()
 	for Index, Projectile in Destroyed do
 		--> Only send events for owned projectiles
 		if Projectile.Caster.Parent == Players then
-			local Bindable = Projectile.Output or Bindable
-			Bindable:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
+			local Output = Projectile.Output or Bindable
+			Output:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
 		end
 		
 		if IS_CLIENT then
@@ -564,11 +553,12 @@ function Simulation.Initialize(ActorInstance: Actor)
 	--> Initialize
 	LastTick = os.clock()
 	Actor = ActorInstance
-	Bindable = ActorInstance.Output
+	Bindable = ActorInstance:FindFirstChild("Output") :: BindableEvent
 	Simulation.ImportDefentions()
 	
 	--> Connections
 	Actor:BindToMessage("Dispatch", Simulation.Simulate)
+	RunService.PreSimulation:Connect(OnPreSimulation)
 	RunService.PostSimulation:ConnectParallel(OnPostSimulation)
 	
 	if IS_CLIENT then 
@@ -622,7 +612,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 	end 
 	
 	--> Create projectile visual
-	local PVInstance = IS_CLIENT and (PVInstance or ProjectileInstances:FindFirstChild(Type)) or nil
+	PVInstance = IS_CLIENT and (PVInstance or ProjectileInstances:FindFirstChild(Type)) or nil
 	if PVInstance then
 		PVInstance = PVInstance:Clone()
 		PVInstance.Parent = Visuals

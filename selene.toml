@@ -1,4 +1,4 @@
-std = "luau+roblox"
+std = "roblox"
 
 exclude = ["luneTypes.d.luau"]
 

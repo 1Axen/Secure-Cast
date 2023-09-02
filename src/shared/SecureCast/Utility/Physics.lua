@@ -1,4 +1,5 @@
 --!strict
+--!native
 --!optimize 2
 
 -- ******************************* --
@@ -7,18 +8,11 @@
 
 ---- Services ----
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 ---- Imports ----
-
-local SecureCast = script.Parent.Parent
-local Utility = SecureCast.Utility
-
-local DrawUtility = require(Utility.Draw)
 
 ---- Settings ----
 
-local AXES = {"X", "Y", "Z"}
+local AXES: {"X" | "Y" | "Z"} = {"X", "Y", "Z"}
 local HERTZ = (1 / 480) -- (1 / 240) * 0.5
 local EPSILON = 1E-5
 
@@ -79,7 +73,7 @@ function Utility.RaycastAABB(Origin: Vector3, Direction: Vector3, Position: Vect
 	local BoundsMin = (Position - Size)
 	local BoundsMax = (Position + Size)
 	
-	for Index, Axis in AXES do
+	for Index, Axis: "X" | "Y" | "Z" in AXES do
 		--> This type checking warning is dumb :/
 		local AxisMin = (BoundsMin[Axis] - Origin[Axis]) * Direction[Axis]
 		local AxisMax = (BoundsMax[Axis] - Origin[Axis]) * Direction[Axis]
@@ -97,11 +91,13 @@ end
 function Utility.RaycastOBB(Length: number, Origin: Vector3, Direction: Vector3, Size: Vector3, Rotation: CFrame): number?
 	local Minimum = 0
 	local Maximum = 100000
-
 	local Delta = (Rotation.Position - Origin)
 
-	--> Test plane intersections
-	for Size, Axis in {[Size.X] = Rotation.RightVector, [Size.Y] = Rotation.UpVector, [Size.Z] = Rotation.LookVector} do
+	--> X plane intersection
+	do
+		local Size = Size.X
+		local Axis = Rotation.RightVector
+
 		--> Ray direction & axis length
 		local NomLength = Axis:Dot(Delta)
 		local DenomLength =  Direction:Dot(Axis)
@@ -137,11 +133,87 @@ function Utility.RaycastOBB(Length: number, Origin: Vector3, Direction: Vector3,
 				return
 			end
 			-- The ray is almost parallel to the planes, so they don't have any "intersection"
-		elseif (-NomLength + Size > 0 or -NomLength + Size < 0) then
+		elseif (-NomLength + Size > 0) or (-NomLength + Size < 0) then
 			return
 		end
 	end
 	
+	--> Y plane intersection
+	do
+		local Size = Size.Y
+		local Axis = Rotation.UpVector
+
+		local NomLength = Axis:Dot(Delta)
+		local DenomLength =  Direction:Dot(Axis)
+
+		if math.abs(DenomLength) > EPSILON then
+			local PlaneMinimum = (NomLength + -Size) / DenomLength
+			local PlaneMaximum = (NomLength + Size) / DenomLength
+
+			if PlaneMinimum > PlaneMaximum then
+				local Temporary = PlaneMinimum
+				PlaneMinimum = PlaneMaximum
+				PlaneMaximum = Temporary
+			end
+
+			if PlaneMaximum < Maximum then
+				Maximum = PlaneMaximum
+			end
+
+			if PlaneMinimum > Minimum then
+				Minimum = PlaneMinimum
+			end
+
+			if Minimum > Length then
+				return
+			end
+
+			if Maximum < Minimum then
+				return
+			end
+		elseif (-NomLength + Size > 0) or (-NomLength + Size < 0) then
+			return
+		end
+	end
+
+	--> Z plane intersection
+	do
+		local Size = Size.Z
+		local Axis = Rotation.LookVector
+
+		local NomLength = Axis:Dot(Delta)
+		local DenomLength =  Direction:Dot(Axis)
+
+		if math.abs(DenomLength) > EPSILON then
+			local PlaneMinimum = (NomLength + -Size) / DenomLength
+			local PlaneMaximum = (NomLength + Size) / DenomLength
+
+			if PlaneMinimum > PlaneMaximum then
+				local Temporary = PlaneMinimum
+				PlaneMinimum = PlaneMaximum
+				PlaneMaximum = Temporary
+			end
+
+			if PlaneMaximum < Maximum then
+				Maximum = PlaneMaximum
+			end
+
+			if PlaneMinimum > Minimum then
+				Minimum = PlaneMinimum
+			end
+
+			if Minimum > Length then
+				return
+			end
+
+			if Maximum < Minimum then
+				return
+			end
+		elseif (-NomLength + Size > 0) or (-NomLength + Size < 0) then
+			return
+		end
+	end
+
 	return Minimum
 end
 

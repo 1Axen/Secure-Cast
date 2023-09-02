@@ -184,8 +184,6 @@ local Visuals = workspace.Visuals
 local Characters = workspace.Characters
 local ProjectileInstances = SecureCast.Projectiles
 
-local NumberGenerator = Random.new()
-
 local Simulation = {}
 
 ---- Variables ----
@@ -259,9 +257,9 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		local PreviousRecord: Record = PreviousRecords[Player]
 		
 		--> Avoid checking teammates
-		--if Player.Team == Caster.Team then
-			--continue
-		--end
+		if Player.Team == Caster.Team then
+			continue
+		end
 		
 		--> Previous record is guaranteed to exist due to it being in the grid
 		if not NextRecord then

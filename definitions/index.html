@@ -12,6 +12,8 @@
         <link rel="prev" href="..">
       
       
+        <link rel="next" href="../settings/">
+      
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.2.4">
@@ -262,6 +264,44 @@
   
 
     
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../snapshots/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Snapshots
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -396,6 +436,19 @@
 <br><span class="method">&#41;</span></p>
 <p>This type represents the way that projectiles should be defined within the system.<br>
 Refer to the template bullet included within the GitHub repository for an example.</p>
+<hr />
+<p><span class="type">type</span>
+<span class="method"> Record &#40;</span>
+    <br>&emsp;<span class="type">{CFrame}</span> <i>Parts</i>,
+    <br>&emsp;<span class="type">Vector3</span> <i>Position</i>,
+<br><span class="method">&#41;</span></p>
+<hr />
+<p><span class="type">type</span>
+<span class="method"> Snapshot &#40;</span>
+    <br>&emsp;<span class="type">number</span> <i>Time</i>,
+    <br>&emsp;<span class="type">Voxels.Grid</span> <i>Grid</i>,
+    <br>&emsp;<span class="type">{[Player]: Record}</span> <i>Records</i>,
+<br><span class="method">&#41;</span></p>
 <hr />
 
 

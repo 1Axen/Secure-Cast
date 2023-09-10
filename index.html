@@ -266,6 +266,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#members" class="md-nav__link">
+    Members
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#methods" class="md-nav__link">
     Methods
   </a>
@@ -299,6 +306,44 @@
   
 
     
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="settings/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Settings
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="snapshots/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Snapshots
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -324,6 +369,13 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#members" class="md-nav__link">
+    Members
+  </a>
+  
+</li>
       
         <li class="md-nav__item">
   <a href="#methods" class="md-nav__link">
@@ -362,12 +414,20 @@
 
 <h1 id="securecast">SecureCast</h1>
 <p>SecureCast is the top-level interface for interacting with the system. It is returned by <code>require(SecureCast)</code>.</p>
+<h2 id="members">Members</h2>
+<p><span class="type">Utility</span>
+<span class="method"> Snapshots</span></p>
+<p>The snapshots utility used by the simulation, you can use this to retrieve player positions back in time for lag compensation.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Snapshots can only be used on the server, calling any of the methods within the utility will throw an error when called from the client!</p>
+</div>
 <h2 id="methods">Methods</h2>
 <p><span class="type">void</span>
 <span class="method"> Initialize &#40;</span>
     <span class="type">number?</span> <i>Threads</i>
 <span class="method">&#41;</span></p>
-<p>Initialize the simulation for the current context. Creates a dispatcher with the specified amount of threads (defaults to <b>9</b> if threads is not defined).</p>
+<p>Initialize the simulation for the current context. Creates a dispatcher with the specified amount of threads (defaults to <b>32</b> if threads is not defined).</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Initialize can only be called once per context, subsequent calls will result in an error.</p>

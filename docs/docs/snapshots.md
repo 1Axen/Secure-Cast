@@ -12,6 +12,10 @@
 
 The snapshots utility is used by the simulation to take "snapshots" of player positions in the past for lag compensation.
 
+!!! note
+
+    Times must be retrieved using os.clock()
+
 ## Methods
 
 <span class="type">{[string]: CFrame}?</span>

@@ -1,6 +1,6 @@
 [package]
 name = "1axen/secure-cast"
-version = "0.0.2"
+version = "0.1.0"
 description = "A server-authoritative projectile system for ROBLOX."
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"

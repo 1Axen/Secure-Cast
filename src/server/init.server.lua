@@ -52,6 +52,20 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 	if (Latency < 0) or (Latency > MAXIMUM_LATENCY) then
 		return
 	end
+
+	--> Retrieve an array of the player's hitboxes lag compensated, this may be nil!
+	local Orienations = SecureCast.Snapshots.GetPlayerAtTime(Latency)
+	if not Orienations then
+		warn(`Unable to do lag compensation for {Player}.`)
+		return
+	end
+
+	--> We do distance checks with the lag compensated positions, this means we can do a much tighter distance check.
+	local Distance = (Origin - Orienations[1].Position).Magnitude
+	if Distance > 1 then
+		warn(`{Player} is too far from the projectile origin.`)
+		return
+	end
 	
 	--> WARNING: Make sure to replicate your modifier to the client as well or the simulation will desync
 	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, Modifier)

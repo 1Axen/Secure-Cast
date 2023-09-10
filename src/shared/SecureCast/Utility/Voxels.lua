@@ -1,4 +1,5 @@
 --!strict
+--!native
 
 -- ******************************* --
 -- 			AX3NX / AXEN		   --
@@ -6,110 +7,100 @@
 
 ---- Services ----
 
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 ---- Imports ----
 
 local SecureCast = script.Parent.Parent
-local Utility = SecureCast.Utility
-
-local DrawUtility = require(Utility.Draw)
+local Settings = require(SecureCast.Settings)
 
 ---- Settings ----
 
-local VOXEL_SIZE = 32
-local VOXEL_CENTER = (Vector3.one * (VOXEL_SIZE / 2))
+local VOXEL_SIZE = Settings.VoxelSize
+local GRID_CFRAME = Settings.VoxelGridCorner
 
-local GRID_SIZE = Vector3.new(4096, 512, 4096)
-local GRID_CFRAME = CFrame.new(-GRID_SIZE)
-local GRID_VOXELS = Vector3.new(
-	math.floor(GRID_SIZE.X / VOXEL_SIZE),
-	math.floor(GRID_SIZE.Y / VOXEL_SIZE),
-	math.floor(GRID_SIZE.Z / VOXEL_SIZE)
-) * 2 - Vector3.one
-
-export type Grid<T> = typeof(setmetatable({}, {})) & {
-	Size: number,
-	Voxels: {[Vector3]: {T}},
-	TraverseVoxels: (Grid<T>, Origin: Vector3, Direction: Vector3) -> {T},
-	Destroy: (Grid<T>) -> (),
+export type Grid<T> = {
+	[Vector3]: {[T]: boolean}
 }
-
 ---- Constants ----
 
-local Grid = {}
-Grid.__index = Grid
+local Utility = {}
 
 ---- Variables ----
 
 ---- Private Functions ----
 
-local function ClearTable(Table: {[any]: any}, Deep: boolean?)
-	for Index, Value in pairs(Table) do
-		if Deep and type(Value) == "table" then
-			ClearTable(Value, true)
-		end
-
-		Table[Index] = nil
-	end
-end
-
-local function DrawVoxel(Position: Vector3)
-	DrawUtility.box(GRID_CFRAME:PointToWorldSpace(Position * VOXEL_SIZE) + VOXEL_CENTER, Vector3.one * VOXEL_SIZE)
+local function FloorVector3(Vector: Vector3): Vector3
+	return Vector3.new(
+		math.floor(Vector.X),
+		math.floor(Vector.Y),
+		math.floor(Vector.Z)
+	)
 end
 
 ---- Public Functions ----
 
-function Grid.new<T>(Data: {[Vector3]: T}): Grid<T>
-	--> Populate Voxels
-	local Size = 0
-	local Voxels = {}
+--> Bounds is a Vector3 which specifies the bounds/size of each input
+--> Example: Player hitboxes which occupy multiple voxels need to be put every voxel they occupy
+function Utility.BuildVoxelGrid<T>(Input: {[T]: Vector3}, Bounds: Vector3): Grid<T>
+	local Voxels: Grid<T> = {}
+	Bounds = Bounds and (Bounds / VOXEL_SIZE) or Vector3.zero
 
-	for Position, Value in Data do
-		Position = GRID_CFRAME:PointToObjectSpace(Position)
-		
-		local Key = Vector3.new(
-			math.floor(Position.X / VOXEL_SIZE),
-			math.floor(Position.Y / VOXEL_SIZE),
-			math.floor(Position.Z / VOXEL_SIZE)
-		)
-		
+	local function Insert(Key: Vector3, Value: T)
 		local Voxel = Voxels[Key]
-		if not Voxel then
-			Size += 1			
-			Voxels[Key] = {Value}
-			continue
+		if not Voxel then	
+			Voxel = {}
+			Voxels[Key] = Voxel
 		end
-		
-		table.insert(Voxel, Value)
+
+		Voxel[Value] = true
 	end
+
+	for Value, Position in Input do
+		Position = GRID_CFRAME:PointToObjectSpace(Position) / VOXEL_SIZE
 	
-	return setmetatable({
-		Size = Size,
-		Voxels = Voxels,
-	} :: any, Grid)
+		--> Insert at each axes
+		if Bounds ~= Vector3.zero then
+			local Maximum = FloorVector3(Position + Bounds)
+			local Minimum = FloorVector3(Position - Bounds) 
+
+			--> X Axis
+			Insert(Vector3.new(Maximum.X, Position.Y, Position.Z), Value)
+			Insert(Vector3.new(Minimum.X, Position.Y, Position.Z), Value)
+
+			--> Y Axis
+			Insert(Vector3.new(Position.X, Maximum.Y, Position.Z), Value)
+			Insert(Vector3.new(Position.X, Minimum.Y, Position.Z), Value)
+
+			--> Z Axis
+			Insert(Vector3.new(Position.X, Position.Y, Maximum.Z), Value)
+			Insert(Vector3.new(Position.X, Position.Y, Minimum.Z), Value)
+		end
+
+		--> Insert at centre
+		Insert(FloorVector3(Position), Value)
+	end
+
+	return Voxels
 end
 
-function Grid:TraverseVoxels(Origin: Vector3, Direction: Vector3)
-	local Voxels = self.Voxels
-	
-	--> Initialize Positions
+function Utility.TraverseVoxelGrid<T>(Origin: Vector3, Direction: Vector3, Voxels: Grid<T>): {[T]: boolean}
+	--> Initialize ray variables
 	local RayStart = GRID_CFRAME:PointToObjectSpace(Origin) / VOXEL_SIZE
 	local RayDestination = GRID_CFRAME:PointToObjectSpace(Origin + Direction) / VOXEL_SIZE
 	local RayDirection = (RayDestination - RayStart)
-	
-	--> Initialise Values
+
+	--> Initialize voxel variables
 	local X = math.floor(RayStart.X)
 	local Y = math.floor(RayStart.Y)
 	local Z = math.floor(RayStart.Z)
-	
+
 	--> Skip over rays that don't exit the voxel they start in
 	if (X == math.floor(RayDestination.X))
 		and (Y == math.floor(RayDestination.Y))
 		and (Z == math.floor(RayDestination.Z)) then
 		return Voxels[Vector3.new(X, Y, Z)] or {}
 	end
-	
+
+	--> Initialize traversal variables
 	local StepX = math.sign(RayDirection.X)
 	local StepY = math.sign(RayDirection.Y)
 	local StepZ = math.sign(RayDirection.Z)
@@ -133,12 +124,12 @@ function Grid:TraverseVoxels(Origin: Vector3, Direction: Vector3)
 	end
 	
 	--> Traverse
-	local PopulatedVoxels: {{any}} = {}
+	local Occupied: {{any}} = {}
 	while true do
 		--> Insert current voxel
 		local Voxel = Voxels[Vector3.new(X, Y, Z)]
 		if Voxel then
-			table.insert(PopulatedVoxels, Voxel)
+			table.insert(Occupied, Voxel)
 		end		
 		
 		--> Break if we reached the end of the ray
@@ -162,23 +153,18 @@ function Grid:TraverseVoxels(Origin: Vector3, Direction: Vector3)
 	end
 	
 	--> Extract items from voxels
-	local Items = {}
-	for Index, Voxel in PopulatedVoxels do
-		for Index, Item in Voxel do
-			table.insert(Items, Item)
+	local Result = {}
+	for _, Voxel in Occupied do
+		for Item in Voxel do
+			Result[Item] = true
 		end
 	end
 	
-	return Items
-end
-
-function Grid:Destroy()
-	ClearTable(self, true)
-	setmetatable(self, nil)
+	return Result
 end
 
 ---- Initialization ----
 
 ---- Connections ----
 
-return Grid
+return Utility

@@ -1,0 +1,28 @@
+site_name: SecureCast API
+repo_url: https://github.com/1Axen/Secure-Cast
+repo_name: 1Axen/Secure-Cast
+theme:
+  name: material
+  palette: 
+    scheme: slate
+  features:
+    - content.code.copy
+    - content.code.annotate
+markdown_extensions:
+  - abbr
+  - def_list
+  - attr_list
+  - admonition
+  - pymdownx.caret
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.snippets
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true

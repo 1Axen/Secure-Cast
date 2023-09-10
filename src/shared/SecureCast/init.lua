@@ -6,18 +6,28 @@
 
 ---- Services ----
 
+local RunService = game:GetService("RunService")
+
 ---- Imports ----
 
+local Utility = script.Utility
+
+local Settings = require(script.Settings)
 local Dispatcher = require(script.Dispatcher)
 local Simulation = require(script.Simulation)
 
+local SnapshotsUtility = require(Utility.Snapshots)
+
 ---- Settings ----
 
-local DEFAULT_THREADS = 9
+local IS_SERVER = RunService:IsServer()
+local DEFAULT_THREADS = Settings.Threads
 
 ---- Constants ----
 
-local SecureCast = {}
+local SecureCast = {
+    Snapshots = SnapshotsUtility
+}
 
 ---- Variables ----
 
@@ -32,6 +42,12 @@ function SecureCast.Initialize(Threads: number?)
 
     Simulation.ImportDefentions()
     SimulationDispatcher = Dispatcher.new(Threads or DEFAULT_THREADS, script.Simulation, Simulation.Process)
+
+    if IS_SERVER then
+        RunService.PostSimulation:Connect(function()
+            SnapshotsUtility.CreatePlayersSnapshot(os.clock())
+        end)
+    end
 end
 
 function SecureCast.Cast(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, Timestamp: number, PVInstance: PVInstance?, Modifier: Simulation.Modifier?)

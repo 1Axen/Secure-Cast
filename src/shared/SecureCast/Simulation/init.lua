@@ -17,9 +17,12 @@ local RunService = game:GetService("RunService")
 local SecureCast = script.Parent
 local Utility = SecureCast.Utility
 
+local Settings = require(SecureCast.Settings)
+
 local DrawUtility = require(Utility.Draw)
 local VoxelsUtility = require(Utility.Voxels)
 local PhysicsUtility = require(Utility.Physics)
+local SnapshotsUtility = require(Utility.Snapshots)
 local BenchmarkUtility = require(Utility.Benchmark)
 
 ---- Settings ----
@@ -27,82 +30,20 @@ local BenchmarkUtility = require(Utility.Benchmark)
 local IS_CLIENT = RunService:IsClient()
 local IS_SERVER = RunService:IsServer()
 
-local PARTS = {
-	"Head",
-	"UpperTorso",
-	"LowerTorso",
-	"LeftUpperArm",
-	"LeftLowerArm",
-	"LeftHand",
-	"RightUpperArm",
-	"RightLowerArm",
-	"RightHand",
-	"LeftUpperLeg",
-	"LeftLowerLeg",
-	"LeftFoot",
-	"RightUpperLeg",
-	"RightLowerLeg",
-	"RightFoot"
-}
-
---> OBB intersection requires hitbox size to be halved!
-local SIZES = {
-	Vector3.new(1.161, 1.181, 1.161) / 2, --> Head
-	Vector3.new(1.943, 1.698, 1.004) / 2, -- UpperTorso
-	Vector3.new(1.991, 0.401, 1.004) / 2, -- LowerTorso
-	Vector3.new(1.001, 1.242, 1.002) / 2, -- LeftUpperArm
-	Vector3.new(1.001, 1.118, 1.002) / 2, -- LeftLowerArm
-	Vector3.new(0.984, 0.316, 1.028) / 2, -- LeftHand
-	Vector3.new(1.001, 1.242, 1.002) / 2, -- RightUpperArm
-	Vector3.new(1.001, 1.118, 1.002) / 2, -- RightLowerArm
-	Vector3.new(0.984, 0.316, 1.028) / 2, -- RightHand
-	Vector3.new(0.993, 1.363, 0.973) / 2, -- LeftUpperLeg
-	Vector3.new(0.993, 1.301, 0.973) / 2, -- LeftLowerLeg
-	Vector3.new(1.009, 0.312, 1.001) / 2, -- LeftFoot
-	Vector3.new(0.993, 1.363, 0.973) / 2, -- RightUpperLeg
-	Vector3.new(0.993, 1.301, 0.973) / 2, -- RightLowerLeg
-	Vector3.new(1.009, 0.312, 1.001) / 2, -- RightFoot
-}
-
---> Discard phase requires maximum hitbox bounds
-local BOUNDS = table.create(#SIZES)
-for Index, Vector in SIZES do
-	table.insert(BOUNDS, Vector * 1.67)
-end
-
---> Per stud
-local HARDNESS = {
-	[Enum.Material.Wood] = 2,
-	[Enum.Material.Concrete] = 10,
-	Default = 10,
-}
+local PARTS = Settings.Parts
+local SIZES = Settings.PartsSizes
+local HITBOX_SIZE = Settings.HitboxSize
 
 local FULL_CIRCLE = math.pi * 2
+local SURFACE_HARDNESS = Settings.SurfaceHardness
+local RICOCHET_HARDNESS = Settings.RicochetHardness
 
---> Minimum surface hardness needed for a projectile to ricochet
-local RICOCHET_HARDNESS = 10
-
-local PARTS_SIZE = #PARTS
-local HITBOX_SIZE = (Vector3.new(6, 6, 6) / 2)
-local SNAPSHOT_LIFETIME = 1
-
-local SERVER_FRAME_RATE = (1 / 60) --> Do not touch!
-local REMAINING_FRAME_TIME_RATIO = 0.5 --> What percentage of the remaining frame time we can use to run the simulation
+local SERVER_FRAME_RATE = Settings.ServerFrameRate
+local REMAINING_FRAME_TIME_RATIO = Settings.RemianingFrameTimeRatio
 
 local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Include
 RAYCAST_PARAMS.FilterDescendantsInstances = {workspace.Map, workspace.Terrain, workspace.Characters}
-
-export type Record = {
-	Parts: {CFrame},
-	Position: Vector3,
-}
-
-export type Snapshot = {
-	Time: number,
-	Grid: VoxelsUtility.Grid<Player>,
-	Records: {[Player]: Record},
-}
 
 export type Intersection = {
 	Part: string,
@@ -114,6 +55,7 @@ export type Modifier = {
 	Loss: number?,
 	Power: number?,
 	Angle: number?,
+	Collaterals: boolean?,
 	
 	Gravity: number?,
 	Velocity: number?,
@@ -151,6 +93,7 @@ export type Projectile = {
 	RaycastFilter: RaycastParams,
 	IncludeFilter: RaycastParams,
 	
+	Collaterals: boolean,
 	PlayerCollisions: boolean, --> Used to determine wether the server will run collision checks for players
 	
 	Instance: PVInstance,
@@ -160,7 +103,8 @@ export type Projectile = {
 export type Definition = {
 	Loss: number, --> Speed loss when ricocheting or bouncing
 	Power: number, --> Penetrative power of the projectile :sus:
-	Angle: number, --> Ricochet angle of the projectile in degrees (set to 360 for grenades)
+	Angle: number, --> Ricochet angle of the projectile in degrees (set to 360 for grenades),
+	Collaterals: boolean,
 	
 	Gravity: number,
 	Velocity: number,
@@ -194,21 +138,10 @@ local FrameTick;
 local Actor: Actor;
 local Bindable: BindableEvent;
 
-local Snapshots: {Snapshot} = table.create(60)
 local Projectiles: {[string]: Projectile} = {}
 local Definitions: {[string]: Definition} = {}
 
 ---- Private Functions ----
-
-local function ClearTable(Table: {[any]: any}, Deep: boolean?)
-	for Index, Value in pairs(Table) do
-		if Deep and type(Value) == "table" then
-			ClearTable(Value, true)
-		end
-
-		Table[Index] = nil
-	end
-end
 
 local function CloneRaycastFilter(RaycastFilter: RaycastParams): RaycastParams
 	local Clone = RaycastParams.new()
@@ -225,25 +158,13 @@ end
 
 local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
 	--> Retrieve previous & next snapshot
-	local NextSnapshot: Snapshot?;
-	local PreviousSnapshot: Snapshot?;
-	
-	for Index = #Snapshots - 1, 1, -1 do
-		local Snapshot = Snapshots[Index]
-		if Snapshot.Time < Time then
-			NextSnapshot = Snapshots[Index + 1]
-			PreviousSnapshot = Snapshots[Index]
-			break
-		end
-	end
-	
-	if not NextSnapshot or not PreviousSnapshot then
-		return
-	end
+	local NextSnapshot, PreviousSnapshot, Fraction = SnapshotsUtility.GetSnapshotsAtTime(Time)
+    if not NextSnapshot or not PreviousSnapshot or not Fraction then
+        return
+    end
 	
 	local NextRecords = NextSnapshot.Records
 	local PreviousRecords = PreviousSnapshot.Records
-	local Fraction = (Time - PreviousSnapshot.Time) / (NextSnapshot.Time - PreviousSnapshot.Time)
 	
 	--> Pre-compute commons
 	local Inverse = (1 / Direction)
@@ -251,10 +172,10 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 	local Length = Direction.Magnitude
 
 	--> Broadphase: Voxels Grid Traversal
-	local Results: {Player} = PreviousSnapshot.Grid:TraverseVoxels(Origin, Direction)
-	for Index, Player in Results do
-		local NextRecord: Record = NextRecords[Player]
-		local PreviousRecord: Record = PreviousRecords[Player]
+	local Results: {[Player]: boolean} = VoxelsUtility.TraverseVoxelGrid(Origin, Direction, PreviousSnapshot.Grid)
+	for Player in Results do
+		local NextRecord: SnapshotsUtility.Record = NextRecords[Player]
+		local PreviousRecord: SnapshotsUtility.Record = PreviousRecords[Player]
 		
 		--> Avoid checking teammates
 		if Player.Team == Caster.Team then
@@ -306,7 +227,7 @@ local function OnPreRender()
 	local CFrames: {CFrame} = {}
 
 	--> Calculate cframes
-	for Identifier, Projectile in Projectiles do
+	for _, Projectile in Projectiles do
 		--> Type casting for client projectiles
 		local PVInstance = Projectile.Instance
 		
@@ -338,53 +259,7 @@ local function OnPostSimulation()
 
 	--> Take a snapshot of the latest player positions
 	if IS_SERVER then
-		--> Create new snapshot
-		local Voxels: {[Vector3]: Player} = {}
-		local Records: {[Player]: Record} = {}
-
-		for Index, Player in Players:GetPlayers() do
-			local Character = Player.Character
-			if not Character then
-				continue
-			end
-			
-			local Parts = {}
-			local Record: Record = {
-				Parts = Parts,
-				Player = Player,
-				Position = Character:GetPivot().Position,
-			}
-			
-			for Index, Name in PARTS do
-				local Part: BasePart = Character:FindFirstChild(Name)
-				if Part then
-					Parts[Index] = Part.CFrame
-					continue
-				end
-			end
-
-			if #Parts == PARTS_SIZE then
-				Records[Player] = Record
-				Voxels[Record.Position] = Player
-			end
-		end
-
-		table.insert(Snapshots, {
-			Time = Tick,
-			Grid = VoxelsUtility.new(Voxels),
-			Records = Records,
-		})
-
-		--> Remove expired snapshots (might be more than one!)
-		--> We must use a reverse loop here to avoid skipping over entries when removing
-		for Index = #Snapshots, 1, -1 do
-			local Snapshot = Snapshots[Index]
-			if (Tick - Snapshot.Time) > SNAPSHOT_LIFETIME then
-				table.remove(Snapshots, Index)
-				Snapshot.Grid:Destroy()
-				ClearTable(Snapshot, true)
-			end
-		end
+		SnapshotsUtility.CreatePlayersSnapshot(Tick)
 	end
 	
 	--> Projectile callbacks need to be processed in serial execution in the main thread
@@ -401,7 +276,7 @@ local function OnPostSimulation()
 		end
 		
 		local Destroy = false
-		
+
 		--> Don't simulate projectiles without owners
 		local Caster = Projectile.Caster
 		if Caster.Parent ~= Players then
@@ -432,7 +307,10 @@ local function OnPostSimulation()
 				Intersection = RaycastPlayers(Caster, Origin, (RaycastPosition - Origin), Projectile.Timestamp + Time)
 				
 				if Intersection then
-					Destroy = true
+					if not Projectile.Collaterals then
+						Destroy = true
+					end
+
 					Intersected[Projectile] = Intersection
 				end
 			end
@@ -442,7 +320,7 @@ local function OnPostSimulation()
 				local Normal = RaycastResult.Normal
 				local UnitDirection = Direction.Unit
 				local SurfaceAngle = math.acos(UnitDirection:Dot(Normal.Unit))
-				local SurfaceHardness = HARDNESS[RaycastResult.Material] or HARDNESS.Default
+				local SurfaceHardness = SURFACE_HARDNESS[RaycastResult.Material] or SURFACE_HARDNESS.Default
 				
 				--> Filter ally characters
 				if IS_CLIENT and Impact:IsDescendantOf(Characters) then
@@ -450,7 +328,7 @@ local function OnPostSimulation()
 					local Character = Humanoid and Humanoid.Parent
 					local Victim = Character and Players:FindFirstChild(Character.Name)
 					if Victim then
-						if Victim.Team ~= Caster.Team then
+						if Victim.Team ~= Caster.Team and not Projectile.Collaterals then
 							Destroy = true
 						else
 							RaycastResult = nil --> Prevent OnImpact event
@@ -527,7 +405,7 @@ local function OnPostSimulation()
 	--> Process destroyed:
 	--> This is done last to allow for processing
 	--> of multiple events per single projectile
-	for Index, Projectile in Destroyed do
+	for _, Projectile in Destroyed do
 		--> Only send events for owned projectiles
 		if Projectile.Caster.Parent == Players then
 			local Output = Projectile.Output or Bindable
@@ -593,19 +471,26 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 	IncludeFilter.FilterType = Enum.RaycastFilterType.Include
 	
 	local RaycastFilter = CloneRaycastFilter(Definition.RaycastFilter or RAYCAST_PARAMS)
-	local InstancesFilter = RaycastFilter.FilterDescendantsInstances
 	local PlayerCollisions = false
 	
 	--> Remove character collisions from server filter
-	if IS_SERVER and (RaycastFilter.FilterType == Enum.RaycastFilterType.Include) then
-		local Index = table.find(InstancesFilter, Characters)
-		if Index then
-			--> Assume we want player collisions
+	if IS_SERVER then
+		local List = RaycastFilter.FilterDescendantsInstances
+		local Index = table.find(List, Characters)
+		if RaycastFilter.FilterType == Enum.RaycastFilterType.Include then
+			if Index then
+				--> Assume we want player collisions
+				PlayerCollisions = true
+				table.remove(List, Index)
+				
+				--> Update filter array
+				RaycastFilter.FilterDescendantsInstances = List
+			end
+		--> Assume we want player collisions if we aren't filtering them out
+		elseif not Index then
 			PlayerCollisions = true
-			table.remove(InstancesFilter, Index)
-			
-			--> Update filter array
-			RaycastFilter.FilterDescendantsInstances = InstancesFilter
+			table.insert(List, Characters)
+			RaycastFilter.FilterDescendantsInstances = List
 		end
 	end 
 	
@@ -641,6 +526,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		RaycastFilter = RaycastFilter,
 		IncludeFilter = IncludeFilter,
 
+		Collaterals = Definitions.Collaterals,
 		PlayerCollisions = PlayerCollisions,
 
 		--> Client rendering
@@ -650,9 +536,8 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 end
 
 function Simulation.ImportDefentions()
-	for Index, Module in script:GetChildren() do
+	for _, Module in script:GetChildren() do
 		if Module:IsA("ModuleScript") then
-			--> Unknown path waaaaaaaaaaaaaaaa
 			Definitions[Module.Name] = require(Module) :: any
 		end
 	end

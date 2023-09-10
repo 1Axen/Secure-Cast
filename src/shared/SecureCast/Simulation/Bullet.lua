@@ -23,9 +23,7 @@ local IS_CLIENT = RunService:IsClient()
 ---- Functions ----
 
 local function OnImpact(Player: Player, Direction: Vector3, Instance: Instance, Normal: Vector3, Position: Vector3, Material: Enum.Material)
-	if IS_CLIENT then
-		DrawUtility.point(Position, Color3.new(1, 1, 0), nil, 0.2)
-	end
+	DrawUtility.point(Position, nil, nil, 0.2)
 end
 
 local function OnDestroyed(Player: Player, Position: Vector3)
@@ -49,6 +47,7 @@ local Projectile: Simulation.Definition = {
 	Loss = 0,
 	Power = 50,
 	Angle = 20,
+	Collaterals = false,
 	
 	Gravity = -8,
 	Velocity = 100,

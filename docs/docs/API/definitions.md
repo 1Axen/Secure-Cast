@@ -22,7 +22,9 @@ This page contains all types defined and used by SecureCast.
     <br>&emsp;<span class="type">number</span> <i>Gravity</i>,
     <br>&emsp;<span class="type">number</span> <i>Velocity</i>,
     <br>&emsp;<span class="type">number</span> <i>Lifetime</i>,
-    <br>&emsp;<span class="type">BindableEvent?</span> <i>Output</i>,
+    <br>&emsp;<span class="type">BindableEvent?</span> <i>OnImpact</i>,
+    <br>&emsp;<span class="type">BindableEvent?</span> <i>OnDestroyed</i>,
+    <br>&emsp;<span class="type">BindableEvent?</span> <i>OnIntersection</i>,
     <br>&emsp;<span class="type">RaycastParams?</span> <i>RaycastFilter</i>,
 <br><span class="method">&#41</span>
 
@@ -43,7 +45,9 @@ Bindable.Event:Connect(function(Type: string, Event: string, ...)
 end)
 
 local Modifier = {
-    Output = Bindable,
+    OnImpact = Bindable,
+    OnDestroyed = Bindable,
+    OnIntersection = Bindable,
 }
 
 SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, Modifier)
@@ -111,7 +115,7 @@ Refer to the template bullet included within the GitHub repository for an exampl
 *[Loss]: Speed loss incured from a projectile ricocheting or bouncing off of a surface.
 *[Power]: Penetrative power of the projectile.
 *[Angle]: Ricochet angle of the projectile in degrees. (360 for grenades)
-*[Output]: BindableEvent used to override per cast events.
+*[Output]: BindableEvent used to override per cast events. [DEPRECATED]
 *[OnImpact]: A callback which is invoked whenever the projectile hits something in the world.
 *[OnDestroyed]: A callback which is invoked whenever the projectile is destroyed.
 *[OnIntersection]: A callback which is invoked whenever the projectile intersects a player hitbox. (SERVER SIDE ONLY)

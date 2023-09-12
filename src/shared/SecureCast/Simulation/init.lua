@@ -62,6 +62,9 @@ export type Modifier = {
 	Lifetime: number?,
 
 	Output: BindableEvent?,
+	OnImpact: BindableEvent?,
+	OnDestroyed: BindableEvent?,
+	OnIntersection: BindableEvent?,
 	RaycastFilter: RaycastParams?,
 
 	[string]: any,
@@ -90,6 +93,9 @@ export type Projectile = {
 	Timestamp: number,
 	
 	Output: BindableEvent?,
+	OnImpact: BindableEvent?,
+	OnDestroyed: BindableEvent?,
+	OnIntersection: BindableEvent?,
 	RaycastFilter: RaycastParams,
 	IncludeFilter: RaycastParams,
 	
@@ -390,14 +396,14 @@ local function OnPostSimulation()
 	
 	--> Process impacts:
 	for Projectile, RaycastResult in Impacted do
-		local Output = Projectile.Output or Bindable
+		local Output = Projectile.OnImpact or Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
 		Output:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
 	end
 	
 	--> Process intersected:
 	for Projectile, Interesction in Intersected do
-		local Output = Projectile.Output or Bindable
+		local Output = Projectile.OnIntersection or Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
 		Output:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
 	end
@@ -408,7 +414,7 @@ local function OnPostSimulation()
 	for _, Projectile in Destroyed do
 		--> Only send events for owned projectiles
 		if Projectile.Caster.Parent == Players then
-			local Output = Projectile.Output or Bindable
+			local Output = Projectile.OnDestroyed or Projectile.Output or Bindable
 			Output:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
 		end
 		

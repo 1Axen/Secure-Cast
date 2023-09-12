@@ -529,6 +529,9 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		Timestamp = Timestamp,
 
 		Output = Definition.Output,
+		OnImpact = Modifier.OnImpact,
+		OnDestroyed = Modifier.OnDestroyed,
+		OnIntersection = Modifier.OnIntersection,
 		RaycastFilter = RaycastFilter,
 		IncludeFilter = IncludeFilter,
 

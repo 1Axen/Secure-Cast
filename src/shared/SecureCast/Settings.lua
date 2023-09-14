@@ -9,10 +9,16 @@ return {
     --> Snapshots
     SnapshotLifetime = 1,
 
-    --> Simulation
-    Threads = 32, --> The maximum amount of CPU threads to allocate
-    ServerFrameRate = (1 / 60), --> Do not touch unless you know what you are doing!
+    --> Definitions
+    Definitions = script.Parent.Simulation,
+
+    --> Simulation (Do not touch these unless you know what you are doing!)
+    Threads = 16, --> The maximum amount of CPU threads to allocate
+    Interpolation = 0.048, --> The base amount of time in seconds it takes for ROBLOX characters to interpolate (this is a guess, no official numbers exist)
+    ServerFrameRate = (1 / 60), --> The server frame rate (assume constant 60 FPS)
     RemianingFrameTimeRatio = 0.5, --> What percentage of the remaining frame time we can use to run the simulation.
+
+    --> Penetration
     SurfaceHardness = {
         [Enum.Material.Wood] = 2,
         [Enum.Material.Concrete] = 10,

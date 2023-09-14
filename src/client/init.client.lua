@@ -26,10 +26,6 @@ local SimulateEvent = Events.Simulate
 
 ---- Variables ----
 
-local Modifier = {
-	Power = 1_000,
-}
-
 ---- Private Functions ----
 
 ---- Public Functions ----
@@ -56,11 +52,11 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
 	local Direction = (Mouse.Hit.Position - Origin).Unit
 	
 	SimulateEvent:FireServer(Origin, Direction, workspace:GetServerTimeNow())
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock(), nil, Modifier)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock())
 end)
 
-SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, Modifer)
+SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, PVInstance: PVInstance?, Modifer)
 	if Caster ~= Player then
-		SecureCast.Cast(Caster, Type, Origin, Direction, os.clock(), nil, Modifer)
+		SecureCast.Cast(Caster, Type, Origin, Direction, os.clock(), PVInstance, Modifer)
 	end
 end)

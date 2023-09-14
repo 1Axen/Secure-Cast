@@ -138,8 +138,7 @@ local Simulation = {}
 
 ---- Variables ----
 
-local LastTick;
-local FrameTick;
+local FrameStartTick;
 
 local Actor: Actor;
 local Bindable: BindableEvent;
@@ -160,6 +159,10 @@ end
 
 local function IncrementTasks(Amount: number)
 	Actor:SetAttribute("Tasks", Actor:GetAttribute("Tasks") + Amount)
+end
+
+local function IsPlayerFriendly(Caster: Player, Player: Player): boolean
+	return Caster.Team == Player.Team
 end
 
 local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector3, Time: number): Intersection?
@@ -184,7 +187,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		local PreviousRecord: SnapshotsUtility.Record = PreviousRecords[Player]
 		
 		--> Avoid checking teammates
-		if Player.Team == Caster.Team then
+		if IsPlayerFriendly(Caster, Player) then
 			continue
 		end
 		
@@ -229,6 +232,7 @@ end
 ---- Public Functions ----
 
 local function OnPreRender()
+	local Tick = os.clock()
 	local Parts: {BasePart} = {}
 	local CFrames: {CFrame} = {}
 
@@ -237,9 +241,9 @@ local function OnPreRender()
 		--> Type casting for client projectiles
 		local PVInstance = Projectile.Instance
 		
-		local Step = (Projectile.Step + (os.clock() - Projectile.Tick))
-		local Position = PhysicsUtility.GetPositionAtTime(Projectile.Origin, Projectile.Velocity, Projectile.Gravity, Step)
-		local Orientation = CFrame.lookAt(Position, Position + PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Step))
+		local Time = (Projectile.Step + (Tick - Projectile.Tick))
+		local Position = PhysicsUtility.GetPositionAtTime(Projectile.Origin, Projectile.Velocity, Projectile.Gravity, Time)
+		local Orientation = CFrame.lookAt(Position, Position + PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Time))
 
 		if PVInstance:IsA("BasePart") then
 			table.insert(Parts, PVInstance)
@@ -255,17 +259,16 @@ local function OnPreRender()
 end
 
 local function OnPreSimulation()
-	FrameTick = os.clock()
+	FrameStartTick = os.clock()
 end
 
-local function OnPostSimulation()
+local function OnPostSimulation(deltaTime: number)
 	local Tick = os.clock()
-	local DeltaTime = (Tick - LastTick)
-	local MaximumFrameTime = (SERVER_FRAME_RATE - (Tick - FrameTick)) * REMAINING_FRAME_TIME_RATIO
+	local MaximumSimulationTime = (SERVER_FRAME_RATE - (Tick - FrameStartTick)) * REMAINING_FRAME_TIME_RATIO
 
 	--> Take a snapshot of the latest player positions
 	if IS_SERVER then
-		SnapshotsUtility.CreatePlayersSnapshot(Tick)
+		SnapshotsUtility.CreatePlayersSnapshot(os.clock())
 	end
 	
 	--> Projectile callbacks need to be processed in serial execution in the main thread
@@ -276,7 +279,7 @@ local function OnPostSimulation()
 
 	--> Simulate Projectiles
 	for Identifier, Projectile in Projectiles do
-		if (os.clock() - Tick) > MaximumFrameTime then
+		if (os.clock() - Tick) > MaximumSimulationTime then
 			--warn("Thread has used all of it's allocated simulation time.")
 			break
 		end
@@ -292,8 +295,8 @@ local function OnPostSimulation()
 		end
 		
 		--> Increment timers
-		local Time = math.min(Projectile.Time + DeltaTime, Projectile.Lifetime)
-		local Step = math.min(Projectile.Step + DeltaTime, Time)
+		local Time = math.min(Projectile.Time + deltaTime, Projectile.Lifetime)
+		local Step = math.min(Projectile.Step + deltaTime, Time)
 		local Position = Projectile.Position
 		
 		--> Only simulate moving projectiles
@@ -350,7 +353,7 @@ local function OnPostSimulation()
 					Projectile.Velocity = (UnitDirection - (2 * UnitDirection:Dot(Normal) * Normal)).Unit * Projectile.Speed
 				--> Wall penetration:
 				elseif Impact ~= Terrain then
-					Projectile.IncludeFilter:AddToFilter({Impact})
+					Projectile.IncludeFilter:AddToFilter(Impact)
 
 					local ReverseDirection = -UnitDirection *  Impact.Size.Magnitude
 					local ReverseOrigin = RaycastPosition - ReverseDirection
@@ -362,11 +365,13 @@ local function OnPostSimulation()
 
 					if Projectile.Power >= Power then
 						local Temporary = Step
-
 						Projectile.Power -= Power
 						Step = PhysicsUtility.GetTimeAtPosition(Projectile.Origin, Projectile.Velocity, Projectile.Gravity, ReversePosition, Step)
 						Position = PhysicsUtility.GetPositionAtTime(Projectile.Origin, Projectile.Velocity, Projectile.Gravity, Step)
-						Time = math.min(Time + (Step - Temporary), Projectile.Lifetime)
+
+						--> Update simulation values
+						local Difference = (Step - Temporary)
+						Time = math.min(Time + Difference, Projectile.Lifetime)
 					else
 						Destroy = true
 					end
@@ -389,8 +394,6 @@ local function OnPostSimulation()
 			table.insert(Destroyed, Projectile)
 		end
 	end
-	
-	LastTick = Tick
 	
 	task.synchronize()
 	
@@ -433,7 +436,6 @@ function Simulation.Initialize(ActorInstance: Actor)
 	assert(typeof(ActorInstance) == "Instance" and ActorInstance:IsA("Actor"), "Simulation can only be used with an actor!")
 	
 	--> Initialize
-	LastTick = os.clock()
 	Actor = ActorInstance
 	Bindable = ActorInstance:FindFirstChild("Output") :: BindableEvent
 	Simulation.ImportDefentions()
@@ -522,20 +524,20 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		Angle = math.rad(Definition.Angle),
 		Speed = Definition.Velocity,
 
-		Tick = os.clock(),
 		Step = 0,
 		Time = 0,
+		Tick = os.clock(),
 		Lifetime = Definition.Lifetime,
 		Timestamp = Timestamp,
 
 		Output = Definition.Output,
-		OnImpact = Modifier.OnImpact,
-		OnDestroyed = Modifier.OnDestroyed,
-		OnIntersection = Modifier.OnIntersection,
+		OnImpact = Modifier and Modifier.OnImpact,
+		OnDestroyed = Modifier and Modifier.OnDestroyed,
+		OnIntersection = Modifier and Modifier.OnIntersection,
 		RaycastFilter = RaycastFilter,
 		IncludeFilter = IncludeFilter,
 
-		Collaterals = Definitions.Collaterals,
+		Collaterals = Definition.Collaterals,
 		PlayerCollisions = PlayerCollisions,
 
 		--> Client rendering
@@ -545,7 +547,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 end
 
 function Simulation.ImportDefentions()
-	for _, Module in script:GetChildren() do
+	for _, Module in Settings.Definitions:GetChildren() do
 		if Module:IsA("ModuleScript") then
 			Definitions[Module.Name] = require(Module) :: any
 		end

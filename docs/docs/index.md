@@ -26,10 +26,9 @@ The snapshots utility used by the simulation, you can use this to retrieve playe
 
 <span class="type">void</span>
 <span class="method"> Initialize &#40</span>
-    <span class="type">number?</span> <i>Threads</i>
 <span class="method">&#41</span>
 
-Initialize the simulation for the current context. Creates a dispatcher with the specified amount of threads (defaults to <b>32</b> if threads is not defined).
+Initialize the simulation for the current context.
 
 !!! warning
 

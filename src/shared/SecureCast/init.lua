@@ -15,17 +15,18 @@ local Utility = script.Utility
 local Settings = require(script.Settings)
 local Dispatcher = require(script.Dispatcher)
 local Simulation = require(script.Simulation)
-
 local SnapshotsUtility = require(Utility.Snapshots)
 
 ---- Settings ----
 
 local IS_SERVER = RunService:IsServer()
-local DEFAULT_THREADS = Settings.Threads
+
+export type Settings = typeof(Settings)
 
 ---- Constants ----
 
 local SecureCast = {
+    Settings = Settings,
     Snapshots = SnapshotsUtility
 }
 
@@ -37,11 +38,11 @@ local SimulationDispatcher;
 
 ---- Public Functions ----
 
-function SecureCast.Initialize(Threads: number?)
+function SecureCast.Initialize()
     assert(SimulationDispatcher == nil, "SecureCast.Initialize can only be called once per execution context!")
 
     Simulation.ImportDefentions()
-    SimulationDispatcher = Dispatcher.new(Threads or DEFAULT_THREADS, script.Simulation, Simulation.Process)
+    SimulationDispatcher = Dispatcher.new(Settings.Threads, script.Simulation, Simulation.Process)
 
     if IS_SERVER then
         RunService.PostSimulation:Connect(function()

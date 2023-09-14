@@ -43,6 +43,13 @@ The lifetime of snapshots in seconds.
 
 ---
 
+<span class="type">Instance</span>
+<span class="method"> Definitions</span>
+
+The container for projectile definitions modules.
+
+---
+
 <span class="type">{[Enum.Material]: number}</span>
 <span class="method"> SurfaceHardness</span>
 

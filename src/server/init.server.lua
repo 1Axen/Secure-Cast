@@ -45,29 +45,43 @@ Players.PlayerAdded:Connect(function(Player: Player)
 		RunService.PostSimulation:Wait()
 		Character.Parent = workspace.Characters
 	end)
+
+	Player.CharacterAppearanceLoaded:Connect(function(Character)
+		for _, Child in Character:GetChildren() do
+			if not Child:IsA("Accessory") then
+				continue
+			end
+
+			local Handle: BasePart? = Child:FindFirstChild("Handle") :: BasePart
+			if Handle then
+				Handle.CanQuery = false
+			end
+		end
+	end)
 end)
 
 ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player, Origin: Vector3, Direction: Vector3, Timestamp: number)
+	local Time = os.clock()
 	local Latency = (workspace:GetServerTimeNow() - Timestamp)
+	local Interpolation = (Player:GetNetworkPing() + SecureCast.Settings.Interpolation)
 	if (Latency < 0) or (Latency > MAXIMUM_LATENCY) then
 		return
 	end
 
-	--> Retrieve an array of the player's hitboxes lag compensated, this may be nil!
-	local Orienations = SecureCast.Snapshots.GetPlayerAtTime(Latency)
-	if not Orienations then
-		warn(`Unable to do lag compensation for {Player}.`)
+	local Character = Player.Character
+	local Head: BasePart? = Character and Character:FindFirstChild("Head") :: BasePart
+	if not Head then
 		return
 	end
 
-	--> We do distance checks with the lag compensated positions, this means we can do a much tighter distance check.
-	local Distance = (Origin - Orienations[1].Position).Magnitude
-	if Distance > 1 then
+	--> Perform a distance check of the origin
+	local Distance = (Origin - Head.Position).Magnitude
+	if Distance > 5 then
 		warn(`{Player} is too far from the projectile origin.`)
 		return
 	end
 	
 	--> WARNING: Make sure to replicate your modifier to the client as well or the simulation will desync
 	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, Modifier)
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, Modifier)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time - Latency - Interpolation, nil, Modifier)
 end)

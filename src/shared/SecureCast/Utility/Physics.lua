@@ -73,7 +73,7 @@ function Utility.RaycastAABB(Origin: Vector3, Direction: Vector3, Position: Vect
 	local BoundsMin = (Position - Size)
 	local BoundsMax = (Position + Size)
 	
-	for Index, Axis: "X" | "Y" | "Z" in AXES do
+	for _, Axis: "X" | "Y" | "Z" in AXES do
 		--> This type checking warning is dumb :/
 		local AxisMin = (BoundsMin[Axis] - Origin[Axis]) * Direction[Axis]
 		local AxisMax = (BoundsMax[Axis] - Origin[Axis]) * Direction[Axis]
@@ -94,6 +94,7 @@ function Utility.RaycastOBB(Length: number, Origin: Vector3, Direction: Vector3,
 	local Delta = (Rotation.Position - Origin)
 
 	--> X plane intersection
+	-- selene: allow(shadowing)
 	do
 		local Size = Size.X
 		local Axis = Rotation.RightVector
@@ -139,6 +140,7 @@ function Utility.RaycastOBB(Length: number, Origin: Vector3, Direction: Vector3,
 	end
 	
 	--> Y plane intersection
+	-- selene: allow(shadowing)
 	do
 		local Size = Size.Y
 		local Axis = Rotation.UpVector
@@ -177,6 +179,7 @@ function Utility.RaycastOBB(Length: number, Origin: Vector3, Direction: Vector3,
 	end
 
 	--> Z plane intersection
+	-- selene: allow(shadowing)
 	do
 		local Size = Size.Z
 		local Axis = Rotation.LookVector

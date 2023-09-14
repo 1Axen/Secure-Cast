@@ -5,6 +5,8 @@
 -- ******************************* --
 
 ---- Services ----
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local RunService = game:GetService("RunService")
 
@@ -38,7 +40,7 @@ local function OnIntersection(Player: Player, Direction: Vector3, Part: string, 
 	end
 	
 	Humanoid:TakeDamage(10) 
-	print(`Intersected {Victim}'s {Part} at {Position}`)
+	print(`Intersected {Victim}'s {Part}`)
 end
 
 ---- Projectile ----

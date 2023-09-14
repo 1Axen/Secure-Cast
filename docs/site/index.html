@@ -10,7 +10,7 @@
       
       
       
-        <link rel="next" href="definitions/">
+        <link rel="next" href="API/definitions/">
       
       
       <link rel="icon" href="assets/images/favicon.png">
@@ -292,8 +292,42 @@
   
   
   
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    API
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
     <li class="md-nav__item">
-      <a href="definitions/" class="md-nav__link">
+      <a href="API/definitions/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -305,14 +339,15 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
     <li class="md-nav__item">
-      <a href="settings/" class="md-nav__link">
+      <a href="API/settings/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -324,14 +359,15 @@
     </li>
   
 
-    
-      
-      
+              
+            
+              
+                
   
   
   
     <li class="md-nav__item">
-      <a href="snapshots/" class="md-nav__link">
+      <a href="API/snapshots/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -340,6 +376,95 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Getting Started
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Getting%20Started/Installation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Installation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Getting%20Started/Simulation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Simulation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -425,9 +550,8 @@
 <h2 id="methods">Methods</h2>
 <p><span class="type">void</span>
 <span class="method"> Initialize &#40;</span>
-    <span class="type">number?</span> <i>Threads</i>
 <span class="method">&#41;</span></p>
-<p>Initialize the simulation for the current context. Creates a dispatcher with the specified amount of threads (defaults to <b>32</b> if threads is not defined).</p>
+<p>Initialize the simulation for the current context.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>Initialize can only be called once per context, subsequent calls will result in an error.</p>

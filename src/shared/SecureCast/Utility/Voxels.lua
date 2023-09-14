@@ -124,7 +124,7 @@ function Utility.TraverseVoxelGrid<T>(Origin: Vector3, Direction: Vector3, Voxel
 	end
 	
 	--> Traverse
-	local Occupied: {{any}} = {}
+	local Occupied: {{[T]: boolean}} = {}
 	while true do
 		--> Insert current voxel
 		local Voxel = Voxels[Vector3.new(X, Y, Z)]
@@ -153,7 +153,7 @@ function Utility.TraverseVoxelGrid<T>(Origin: Vector3, Direction: Vector3, Voxel
 	end
 	
 	--> Extract items from voxels
-	local Result = {}
+	local Result: {[T]: boolean} = {}
 	for _, Voxel in Occupied do
 		for Item in Voxel do
 			Result[Item] = true

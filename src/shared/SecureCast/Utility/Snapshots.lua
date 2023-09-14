@@ -16,6 +16,8 @@ local SecureCast = script.Parent.Parent
 local Utility = SecureCast.Utility
 
 local Settings = require(SecureCast.Settings)
+
+local DrawUtility = require(Utility.Draw)
 local VoxelsUtility = require(Utility.Voxels)
 
 ---- Settings ----
@@ -70,7 +72,7 @@ local function GetSnapshotsAtTime(Time: number): (Snapshot?, Snapshot?, number?)
     local Next: Snapshot?, Previous: Snapshot?;
     for Index = #Snapshots - 1, 1, -1 do
 		local Snapshot = Snapshots[Index]
-		if Snapshot.Time < Time then
+		if Snapshot and Snapshot.Time < Time then
 			Next = Snapshots[Index + 1]
 			Previous = Snapshots[Index]
 			break
@@ -103,13 +105,15 @@ function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFram
 
     local Orientations: {[string]: CFrame} = {}
     for Index, Orientation in PreviousRecord.Parts do
+		DrawUtility.box(Orientation, Settings.PartsSizes[Index] * 2, Color3.new(1, 1, 0))
+		DrawUtility.box(NextRecord.Parts[Index], Settings.PartsSizes[Index] * 2, Color3.new(1, 0, 1))
         Orientations[PARTS[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
     end
     
     return Orientations
 end
 
-function Utility.GetPlayersAtTime(Time: number): Orientations
+function Utility.GetPlayersAtTime(Time: number): Orientations?
 	assert(IS_SERVER, "Snapshots.GetPlayersAtTime should only be called on the server!")
 
     local Next, Previous, Fraction = GetSnapshotsAtTime(Time)
@@ -124,7 +128,7 @@ function Utility.GetPlayersAtTime(Time: number): Orientations
             continue
         end
 
-        local Parts = table.create(PARTS_SIZE)
+        local Parts = {}
         Orientations[Player] = Parts
 
         for Index, Orientation in Record.Parts do

@@ -42,8 +42,8 @@ local SERVER_FRAME_RATE = Settings.ServerFrameRate
 local REMAINING_FRAME_TIME_RATIO = Settings.RemianingFrameTimeRatio
 
 local RAYCAST_PARAMS = RaycastParams.new()
-RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Include
-RAYCAST_PARAMS.FilterDescendantsInstances = {workspace.Map, workspace.Terrain, workspace.Characters}
+RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude
+RAYCAST_PARAMS.FilterDescendantsInstances = {workspace:FindFirstChild(Settings.VisualsFolder)}
 
 export type Intersection = {
 	Part: string,
@@ -130,8 +130,8 @@ export type Definition = {
 ---- Constants ----
 
 local Terrain = workspace.Terrain
-local Visuals = workspace.Visuals
-local Characters = workspace.Characters
+local Visuals = workspace:FindFirstChild(Settings.VisualsFolder)
+local Characters = workspace:FindFirstChild(Settings.CharacterFolder)
 local ProjectileInstances = SecureCast.Projectiles
 
 local Simulation = {}

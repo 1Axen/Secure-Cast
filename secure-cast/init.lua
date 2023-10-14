@@ -13,6 +13,17 @@ local RunService = game:GetService("RunService")
 local Utility = script.Utility
 
 local Settings = require(script.Settings)
+
+--> Ensure that a visuals folder exists
+do
+    local Visuals = workspace:FindFirstChild(Settings.VisualsFolder)
+    if not Visuals then
+        local Folder = Instance.new("Folder")
+        Folder.Name = Settings.VisualsFolder
+        Folder.Parent = workspace
+    end
+end
+
 local Dispatcher = require(script.Dispatcher)
 local Simulation = require(script.Simulation)
 local SnapshotsUtility = require(Utility.Snapshots)
@@ -40,6 +51,7 @@ local SimulationDispatcher;
 
 function SecureCast.Initialize()
     assert(SimulationDispatcher == nil, "SecureCast.Initialize can only be called once per execution context!")
+    assert(workspace:WaitForChild(Settings.CharacterFolder, 15), `SecureCast requires a "{Settings.CharacterFolder}" folder in workspace to function properly!`)
 
     Simulation.ImportDefentions()
     SimulationDispatcher = Dispatcher.new(Settings.Threads, script.Simulation, Simulation.Process)

@@ -8,24 +8,24 @@
         "$className": "ReplicatedStorage",
   
         "SecureCast": {
-          "$path": "src/shared/SecureCast"
+          "$path": "secure-cast"
         },
   
         "Events": {
-          "$path": "src/shared/Events"
+          "$path": "example/shared/Events"
         }
       },
   
       "ServerScriptService": {
         "Server": {
-          "$path": "src/server"
+          "$path": "example/server"
         }
       },
   
       "StarterPlayer": {
         "StarterPlayerScripts": {
           "Client": {
-            "$path": "src/client"
+            "$path": "example/client"
           }
         }
       },

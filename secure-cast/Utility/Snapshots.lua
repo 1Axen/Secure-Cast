@@ -16,8 +16,6 @@ local SecureCast = script.Parent.Parent
 local Utility = SecureCast.Utility
 
 local Settings = require(SecureCast.Settings)
-
-local DrawUtility = require(Utility.Draw)
 local VoxelsUtility = require(Utility.Voxels)
 
 ---- Settings ----
@@ -105,8 +103,6 @@ function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFram
 
     local Orientations: {[string]: CFrame} = {}
     for Index, Orientation in PreviousRecord.Parts do
-		DrawUtility.box(Orientation, Settings.PartsSizes[Index] * 2, Color3.new(1, 1, 0))
-		DrawUtility.box(NextRecord.Parts[Index], Settings.PartsSizes[Index] * 2, Color3.new(1, 0, 1))
         Orientations[PARTS[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
     end
     

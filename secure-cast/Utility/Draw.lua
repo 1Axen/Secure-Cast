@@ -27,6 +27,7 @@ local CollectionService = game:GetService("CollectionService")
 local TextService = game:GetService("TextService")
 
 local Terrain = Workspace.Terrain
+local Settings = require(script.Parent.Parent.Settings)
 
 local SERVER_DEFAULT_COLOR = Color3.new(0, 0, 1)
 local CLIENT_DEFAULT_COLOR = Color3.new(1, 0, 0)
@@ -693,7 +694,7 @@ end
 	@return Instance
 ]=]
 function Draw.getDefaultParent()
-	return workspace.Visuals.Draw
+	return workspace:FindFirstChild(Settings.VisualsFolder)
 end
 
 return Draw

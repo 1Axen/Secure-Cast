@@ -62,4 +62,7 @@ return {
         Vector3.new(1.009, 0.312, 1.001) / 2, -- RightFoot
     },
     HitboxSize = Vector3.new(6, 6, 6) / 2,
+
+    VisualsFolder = "SECURE_CAST_VISUALS",
+    CharacterFolder = "Characters",
 }

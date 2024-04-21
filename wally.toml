@@ -1,11 +1,11 @@
 [package]
 name = "1axen/secure-cast"
-version = "1.1.1"
+version = "1.1.2"
 description = "A server-authoritative projectile system for ROBLOX."
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
-exclude = ["docs", "example", "LICENSE", ".**", "**.json", "**.toml", "**.md", "**.lock", "**.yml"]
-include = ["wally.toml", "default.project.json"]
+exclude = ["**"]
+include = ["src", "src/*", "wally.toml", "default.project.json", "LICENSE"]
 
 [dependencies]

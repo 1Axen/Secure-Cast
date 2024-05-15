@@ -1,6 +1,6 @@
 {
   "name": "secure-cast",
   "tree": {
-    "$path": "secure-cast"
+    "$path": "src"
   }
 }

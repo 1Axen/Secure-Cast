@@ -7,7 +7,7 @@ Installing the module into your place is simple, we will cover the different met
 SecureCast is available as a Wally package.
 <br>Navigate to your projects `wally.toml` file and add the following dependancy
 ``` toml
-secure-cast = "1axen/secure-cast"
+securecast = "1axen/secure-cast"
 ```
 After adding SecureCast to your dependencies you will need to install it by running
 ```

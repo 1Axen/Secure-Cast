@@ -354,6 +354,7 @@ local function OnPostSimulation(deltaTime: number)
 				--> Wall penetration:
 				elseif Impact ~= Terrain then
 					Projectile.IncludeFilter:AddToFilter(Impact)
+					Projectile.RaycastFilter:AddToFilter(Impact)
 
 					local ReverseDirection = -UnitDirection *  Impact.Size.Magnitude
 					local ReverseOrigin = RaycastPosition - ReverseDirection

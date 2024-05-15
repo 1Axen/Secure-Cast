@@ -8,7 +8,7 @@
         "$className": "ReplicatedStorage",
   
         "SecureCast": {
-          "$path": "secure-cast"
+          "$path": "src"
         },
   
         "Events": {

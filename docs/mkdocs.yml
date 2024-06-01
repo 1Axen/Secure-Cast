@@ -1,6 +1,19 @@
 site_name: SecureCast API
 repo_url: https://github.com/1Axen/Secure-Cast
 repo_name: 1Axen/Secure-Cast
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: Getting Started\Installation.md
+    - Simulation: Getting Started\Simulation.md
+    - Modifiers: Getting Started\Modifiers.md
+  - API:
+    - SecureCast: API\securecast.md
+    - Settings: API\settings.md
+    - Definitions: API\definitions.md
+    - Snapshots: API\snapshots.md
+
 theme:
   name: material
   palette: 

@@ -4,7 +4,7 @@ In this section we will explore setting up a basic simulation along side the dif
 
 ---
 
-# Setting up your workspace
+## Setting up your workspace
 
 SecureCast requires a `Map` and `Characters` folder placed within workspace to function correctly.<br>
 All parts of the map must be a descendant of the `Map` folder. <br>
@@ -15,7 +15,7 @@ Add a RemoteEvent named `Simulation` under the `Events` folder.
 
 ---
 
-# Setting up your client
+## Setting up your client
 
 Create a LocalScript and place it under StarterPlayerScripts.
 Copy and paste the following code into the script you just created:
@@ -65,7 +65,7 @@ SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origi
 end)
 ```
 
-# Setting up your server
+## Setting up your server
 
 Create a Script and place it under ServerScriptService.
 Copy and paste the following code into the script you just created:
@@ -147,7 +147,7 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 end)
 ```
 
-# Test your simulation
+## Test your simulation
 
 You can test if your simulation is working properly by going into a Local Test Server.
 !!! note

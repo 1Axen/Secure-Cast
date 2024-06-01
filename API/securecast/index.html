@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../securecast/">
+        <link rel="prev" href="../../Getting%20Started/Modifiers/">
       
       
-        <link rel="next" href="../definitions/">
+        <link rel="next" href="../settings/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Settings - SecureCast API</title>
+        <title>SecureCast - SecureCast API</title>
       
     
     
@@ -70,7 +70,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#settings" class="md-skip">
+        <a href="#securecast" class="md-skip">
           Skip to content
         </a>
       
@@ -106,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Settings
+              SecureCast
             
           </span>
         </div>
@@ -382,27 +382,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../securecast/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    SecureCast
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -415,7 +394,77 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    SecureCast
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    SecureCast
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#members" class="md-nav__link">
+    <span class="md-ellipsis">
+      Members
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      Methods
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -424,7 +473,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -499,6 +547,32 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#members" class="md-nav__link">
+    <span class="md-ellipsis">
+      Members
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      Methods
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -525,56 +599,42 @@
     }
 </style>
 
-<h1 id="settings">Settings</h1>
-<p>This page contains all settings used by SecureCast. These can be found in the Settings module under the SecureCast module.</p>
-<hr />
-<p><span class="type">number</span>
-<span class="method"> VoxelSize</span></p>
-<p>The size of each voxel in studs.</p>
-<hr />
-<p><span class="type">Vector3</span>
-<span class="method"> VoxelGridSize</span></p>
-<p>The size of the voxel grid in studs.</p>
-<div class="admonition danger">
-<p class="admonition-title">Danger</p>
-<p>Be careful when editing this value, anything smaller than the playable area will result in players being missed by the server raycasts.</p>
+<h1 id="securecast">SecureCast</h1>
+<p>SecureCast is the top-level interface for interacting with the system. It is returned by <code>require(SecureCast)</code>.</p>
+<h2 id="members">Members</h2>
+<p><span class="type">Utility</span>
+<span class="method"> Snapshots</span></p>
+<p>The snapshots utility used by the simulation, you can use this to retrieve player positions back in time for lag compensation.<br />
+The API for this utility is available <a href="../snapshots/">here</a>.  </p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Snapshots can only be used on the server, calling any of the methods within the utility will throw an error when called from the client!</p>
+</div>
+<h2 id="methods">Methods</h2>
+<p><span class="type">void</span>
+<span class="method"> Initialize &#40;</span>
+<span class="method">&#41;</span></p>
+<p>Initialize the simulation for the current context.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Initialize can only be called once per context, subsequent calls will result in an error.</p>
 </div>
 <hr />
-<p><span class="type">number</span>
-<span class="method"> SnapshotLifetime</span></p>
-<p>The lifetime of snapshots in seconds.</p>
+<p><span class="type">void</span>
+<span class="method"> Cast &#40;</span>
+    <br>&emsp;<span class="type">Player</span> <i>Caster</i>,
+    <br>&emsp;<span class="type">string</span> <i>Type</i>,
+    <br>&emsp;<span class="type">Vector3</span> <i>Origin</i>
+    <br>&emsp;<span class="type">Vector3</span> <i>Direction</i>
+    <br>&emsp;<span class="type">number</span> <i>Timestamp</i>
+    <br>&emsp;<span class="type">PVInstance?</span> <i>PVInstance</i>
+    <br>&emsp;<span class="type">Modifier?</span> <i>Modifier</i>
+<br><span class="method">&#41;</span></p>
+<p>Casts a new projectile. A <span class="type">Modifier</span> can be used to modify the behaviour of a projectile on a per cast basis. A <span class="type">PVInstance</span> must exist on the client in order for the projectile to be rendered.</p>
 <div class="admonition danger">
 <p class="admonition-title">Danger</p>
-<p>Be careful when editing this value, very small values will result in players with high ping not being able to land shots but high values may result in players being hit behind cover long after they have gone behind it.</p>
+<p>When using a Modifier make sure that all clients and the server use the same modifier, improper modifier usage can result in simulation desync.</p>
 </div>
-<hr />
-<p><span class="type">Instance</span>
-<span class="method"> Definitions</span></p>
-<p>The container for projectile definitions modules.</p>
-<hr />
-<p><span class="type">{[Enum.Material]: number}</span>
-<span class="method"> SurfaceHardness</span></p>
-<p>An array of each materials hardness.<br>
-The needed penetration power can be calculate with the following formula:<br>
-<code>Power = SurfaceDepth * SurfaceHardness</code></p>
-<hr />
-<p><span class="type">number</span>
-<span class="method"> RicochetHardness</span></p>
-<p>The minimum surface hardness needed for a projectile to ricochet off of something.<br>
-This is ignored when a projectile has a ricochet angle set to <code>math.pi * 2</code>.</p>
-<hr />
-<p><span class="type">{string}</span>
-<span class="method"> Parts</span></p>
-<p>An array containing the names of every hitbox in a players character, ordered from most to least damage.</p>
-<hr />
-<p><span class="type">{Vector3}</span>
-<span class="method"> PartsSizes</span></p>
-<p>An array containing the halved sizes of every hitbox in a players character, in the same order as the <code>Parts</code> array.</p>
-<hr />
-<p><span class="type">Vector3</span>
-<span class="method"> HitboxSize</span></p>
-<p>The maximum halved size of a players character, it needs to contain the character at it's maximum arm span.</p>
-<hr />
 
 
 

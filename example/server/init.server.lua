@@ -82,6 +82,6 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 	end
 	
 	--> WARNING: Make sure to replicate your modifier to the client as well or the simulation will desync
-	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, Modifier)
+	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, nil, Modifier)
 	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time - Latency - Interpolation, nil, Modifier)
 end)

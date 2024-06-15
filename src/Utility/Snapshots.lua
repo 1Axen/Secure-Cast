@@ -16,12 +16,23 @@ local SecureCast = script.Parent.Parent
 local Utility = SecureCast.Utility
 
 local Settings = require(SecureCast.Settings)
-local VoxelsUtility = require(Utility.Voxels)
+local VoxelsUtility = require(SecureCast.Utility.Voxels)
 
 ---- Settings ----
 
-local PARTS = Settings.Parts
-local PARTS_SIZE = #PARTS
+local CHARACTER_DATA = {
+	-- The number keys are taken after the 
+	-- `Value` property of `Enum.HumanoidRigType`
+	[0] = {
+		Parts = Settings.R6Parts,
+		Size = #Settings.R6Parts,
+	},
+
+	[1] = {
+		Parts = Settings.R15Parts,
+		Size = #Settings.R15Parts,
+	},
+}
 local HITBOX_SIZE = Settings.HitboxSize
 
 local SNAPSHOT_LIFETIME = Settings.SnapshotLifetime
@@ -29,6 +40,7 @@ local SNAPSHOT_LIFETIME = Settings.SnapshotLifetime
 local IS_SERVER = RunService:IsServer()
 
 export type Record = {
+	RigType: number,
 	Parts: {CFrame},
 	Position: Vector3,
 }
@@ -101,9 +113,11 @@ function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFram
         return
     end
 
+	local Parts = CHARACTER_DATA[NextRecord.RigType].Parts
+
     local Orientations: {[string]: CFrame} = {}
     for Index, Orientation in PreviousRecord.Parts do
-        Orientations[PARTS[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
+        Orientations[Parts[Index] ] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
     end
     
     return Orientations
@@ -125,10 +139,12 @@ function Utility.GetPlayersAtTime(Time: number): Orientations?
         end
 
         local Parts = {}
-        Orientations[Player] = Parts
+		local PartNames = CHARACTER_DATA[NextRecord.RigType].Parts
+        
+		Orientations[Player] = Parts
 
         for Index, Orientation in Record.Parts do
-            Parts[PARTS[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
+            Parts[PartNames[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
         end
     end
 
@@ -142,19 +158,26 @@ function Utility.CreatePlayersSnapshot(Time: number)
 
 	for _, Player in Players:GetPlayers() do
 		local Character = Player.Character
+
 		if not Character then
 			continue
 		end
-		
+
+		local RigType = Character.Humanoid.RigType.Value :: number
+		local PARTS = CHARACTER_DATA[RigType].Parts
+		local PARTS_SIZE  = CHARACTER_DATA[RigType].Size
+
 		local Parts = {}
 		local Record: Record = {
 			Parts = Parts,
+			RigType = RigType,
 			Player = Player,
 			Position = Character:GetPivot().Position,
 		}
 		
 		for Index, Name in PARTS do
 			local Part: BasePart = Character:FindFirstChild(Name)
+
 			if Part then
 				Parts[Index] = Part.CFrame
 				continue

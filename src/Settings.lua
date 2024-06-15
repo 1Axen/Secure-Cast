@@ -27,7 +27,16 @@ return {
     RicochetHardness = 10,
 
     --> Characters
-    Parts = {
+    R6Parts = {
+        "Head",
+        "Torso",
+        "Left Arm",
+        "Right Arm",
+        "Left Leg",
+        "Right Leg",
+    },
+
+    R15Parts = {
         "Head",
         "UpperTorso",
         "LowerTorso",
@@ -44,7 +53,17 @@ return {
         "RightLowerLeg",
         "RightFoot"
     },
-    PartsSizes = {
+
+    R6PartSizes = {
+        Vector3.new(1.161, 1.181, 1.161) / 2, -- Head
+        Vector3.new(2, 2, 1) / 2, -- Torso
+        Vector3.new(1, 2, 1) / 2, -- Left Arm
+        Vector3.new(1, 2, 1) / 2, -- Right Arm
+        Vector3.new(1, 2, 1) / 2, -- Left Leg
+        Vector3.new(1, 2, 1) / 2 -- Right Leg
+    },
+
+    R15PartSizes = {
         Vector3.new(1.161, 1.181, 1.161) / 2, -- Head
         Vector3.new(1.943, 1.698, 1.004) / 2, -- UpperTorso
         Vector3.new(1.991, 0.401, 1.004) / 2, -- LowerTorso

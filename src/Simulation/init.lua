@@ -31,7 +31,6 @@ local IS_CLIENT = RunService:IsClient()
 local IS_SERVER = RunService:IsServer()
 
 local PARTS = Settings.Parts
-local SIZES = Settings.PartsSizes
 local HITBOX_SIZE = Settings.HitboxSize
 
 local FULL_CIRCLE = math.pi * 2
@@ -203,6 +202,8 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		end
 
 		local NextParts = NextRecord.Parts
+		local NAMES, SIZES = PARTS[NextRecord.RigType].Names, PARTS[NextRecord.RigType].Sizes
+
 		for Index, Rotation in PreviousRecord.Parts do
 			local Size = SIZES[Index]
 			local Next = NextParts[Index]
@@ -218,7 +219,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 
 			if Intersection then
 				return {
-					Part = PARTS[Index],
+					Part = NAMES[Index],
 					Player = Player,
 					Position = (Normalized * Intersection)
 				}

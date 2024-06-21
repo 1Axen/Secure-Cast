@@ -30,19 +30,7 @@ local BenchmarkUtility = require(Utility.Benchmark)
 local IS_CLIENT = RunService:IsClient()
 local IS_SERVER = RunService:IsServer()
 
-local CHARACTER_DATA = {
-	-- The number keys are taken after the 
-	-- `Value` property of `Enum.HumanoidRigType`
-	[0] = {
-		Parts = Settings.R6Parts,
-		Size = Settings.R6PartSizes,
-	},
-
-	[1] = {
-		Parts = Settings.R15Parts,
-		Size = Settings.R15PartSizes,
-	},
-}
+local PARTS = Settings.Parts
 local HITBOX_SIZE = Settings.HitboxSize
 
 local FULL_CIRCLE = math.pi * 2
@@ -214,7 +202,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 		end
 
 		local NextParts = NextRecord.Parts
-		local PARTS, SIZES = CHARACTER_DATA[NextRecord.RigType].Parts, CHARACTER_DATA[NextRecord.RigType].Size
+		local NAMES, SIZES = PARTS[NextRecord.RigType].Names, PARTS[NextRecord.RigType].Sizes
 
 		for Index, Rotation in PreviousRecord.Parts do
 			local Size = SIZES[Index]
@@ -231,7 +219,7 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 
 			if Intersection then
 				return {
-					Part = PARTS[Index],
+					Part = NAMES[Index],
 					Player = Player,
 					Position = (Normalized * Intersection)
 				}

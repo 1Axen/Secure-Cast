@@ -16,23 +16,11 @@ local SecureCast = script.Parent.Parent
 local Utility = SecureCast.Utility
 
 local Settings = require(SecureCast.Settings)
-local VoxelsUtility = require(SecureCast.Utility.Voxels)
+local VoxelsUtility = require(Utility.Voxels)
 
 ---- Settings ----
 
-local CHARACTER_DATA = {
-	-- The number keys are taken after the 
-	-- `Value` property of `Enum.HumanoidRigType`
-	[0] = {
-		Parts = Settings.R6Parts,
-		Size = #Settings.R6Parts,
-	},
-
-	[1] = {
-		Parts = Settings.R15Parts,
-		Size = #Settings.R15Parts,
-	},
-}
+local PARTS = Settings.Parts
 local HITBOX_SIZE = Settings.HitboxSize
 
 local SNAPSHOT_LIFETIME = Settings.SnapshotLifetime
@@ -40,7 +28,7 @@ local SNAPSHOT_LIFETIME = Settings.SnapshotLifetime
 local IS_SERVER = RunService:IsServer()
 
 export type Record = {
-	RigType: number,
+	RigType: Enum.HumanoidRigType,
 	Parts: {CFrame},
 	Position: Vector3,
 }
@@ -113,11 +101,11 @@ function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFram
         return
     end
 
-	local Parts = CHARACTER_DATA[NextRecord.RigType].Parts
+	local PartNames = PARTS[NextRecord.RigType].Names
 
     local Orientations: {[string]: CFrame} = {}
     for Index, Orientation in PreviousRecord.Parts do
-        Orientations[Parts[Index] ] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
+        Orientations[PartNames[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
     end
     
     return Orientations
@@ -139,7 +127,7 @@ function Utility.GetPlayersAtTime(Time: number): Orientations?
         end
 
         local Parts = {}
-		local PartNames = CHARACTER_DATA[NextRecord.RigType].Parts
+		local PartNames = PARTS[NextRecord.RigType].Names
         
 		Orientations[Player] = Parts
 
@@ -163,9 +151,8 @@ function Utility.CreatePlayersSnapshot(Time: number)
 			continue
 		end
 
-		local RigType = Character.Humanoid.RigType.Value :: number
-		local PARTS = CHARACTER_DATA[RigType].Parts
-		local PARTS_SIZE  = CHARACTER_DATA[RigType].Size
+		local RigType = Character.Humanoid.RigType :: Enum.HumanoidRigType
+		local PartNames, PartSizes = PARTS[RigType].Names, PARTS[RigType].Sizes
 
 		local Parts = {}
 		local Record: Record = {
@@ -175,7 +162,7 @@ function Utility.CreatePlayersSnapshot(Time: number)
 			Position = Character:GetPivot().Position,
 		}
 		
-		for Index, Name in PARTS do
+		for Index, Name in PartNames do
 			local Part: BasePart = Character:FindFirstChild(Name)
 
 			if Part then
@@ -184,7 +171,7 @@ function Utility.CreatePlayersSnapshot(Time: number)
 			end
 		end
 
-		if #Parts == PARTS_SIZE then
+		if #Parts == #PartSizes then
 			Records[Player] = Record
 			Voxels[Player] = Record.Position
 		end

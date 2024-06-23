@@ -152,7 +152,7 @@ function Utility.CreatePlayersSnapshot(Time: number)
 		end
 
 		local RigType = Character.Humanoid.RigType :: Enum.HumanoidRigType
-		local PartNames, PartSizes = PARTS[RigType].Names, PARTS[RigType].Sizes
+		local PartNames = PARTS[RigType].Names
 
 		local Parts = {}
 		local Record: Record = {
@@ -171,7 +171,7 @@ function Utility.CreatePlayersSnapshot(Time: number)
 			end
 		end
 
-		if #Parts == #PartSizes then
+		if #Parts == #PartNames then
 			Records[Player] = Record
 			Voxels[Player] = Record.Position
 		end

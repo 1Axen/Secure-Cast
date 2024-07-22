@@ -50,17 +50,19 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
 	
 	local Origin = Head.Position
 	local Direction = (Mouse.Hit.Position - Origin).Unit
+
+	local Time = workspace:GetServerTimeNow()
 	
     --> Replicate to the server
-	SimulateEvent:FireServer(Origin, Direction, workspace:GetServerTimeNow())
+	SimulateEvent:FireServer(Origin, Direction, Time)
 
     --> Cast the projectile within our own simulation
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock())
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time)
 end)
 
 SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, PVInstance: PVInstance?, Modifer)
 	if Caster ~= Player then
-		SecureCast.Cast(Caster, Type, Origin, Direction, os.clock(), PVInstance, Modifer)
+		SecureCast.Cast(Caster, Type, Origin, Direction, workspace:GetServerTimeNow(), PVInstance, Modifer)
 	end
 end)
 ```
@@ -117,7 +119,6 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
     --> The best estimate for this value available is (PLAYER_PING + 48 ms)
     --> If we do not factor in interpolation we will end up with inaccurate lag compensation
 
-	local Time = os.clock()
 	local Latency = (workspace:GetServerTimeNow() - Timestamp)
 	local Interpolation = (Player:GetNetworkPing() + SecureCast.Settings.Interpolation)
 
@@ -143,7 +144,7 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction)
 
     --> Cast the projectile within our own simulation
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time - Latency - Interpolation)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Timestamp - Interpolation)
 end)
 ```
 

@@ -14,7 +14,7 @@ The snapshots utility is used by the simulation to take "snapshots" of player po
 
 !!! note
 
-    Times must be retrieved using os.clock()
+    Times must be retrieved using workspace:GetServerTimeNow()
 
 ## Methods
 

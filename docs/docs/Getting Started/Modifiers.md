@@ -22,12 +22,14 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
             Power = 200
         }
     end
+
+    local Time = workspace:GetServerTimeNow()
 	
     --> Replicate to the server
-	SimulateEvent:FireServer(Origin, Direction, workspace:GetServerTimeNow())
+	SimulateEvent:FireServer(Origin, Direction, Time)
 
     --> Cast the projectile within our own simulation
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock(), nil, ProjectileModifier)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time, nil, ProjectileModifier)
 end)
 
 ...

@@ -51,7 +51,7 @@ local Modifier = {
     OnIntersection = Bindable,
 }
 
-SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, Modifier)
+SecureCast.Cast(Player, "Bullet", Origin, Direction, Time, nil, Modifier)
 ```
 
 !!! danger

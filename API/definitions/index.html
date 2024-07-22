@@ -540,6 +540,7 @@
     <br>&emsp;<span class="type">BindableEvent?</span> <i><abbr title="A callback which is invoked whenever the projectile is destroyed.">OnDestroyed</abbr></i>,
     <br>&emsp;<span class="type">BindableEvent?</span> <i><abbr title="A callback which is invoked whenever the projectile intersects a player hitbox. (SERVER SIDE ONLY)">OnIntersection</abbr></i>,
     <br>&emsp;<span class="type">RaycastParams?</span> <i>RaycastFilter</i>,
+    <br>&emsp;<span class="type">{[string]: any}?</span> <i><abbr title="A dictionary containing user defined values">Extra</abbr></i>,
 <br><span class="method">&#41;</span></p>
 <p>Modifiers are a powerful tool that allows you to define per cast functionality seperate from the base projectile definition.</p>
 <div class="language-lua highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">Custom event handling</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-1"> 1</a></span>
@@ -604,10 +605,12 @@
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Normal</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>,
         <br>&emsp;&emsp;<span class="type">Enum.Material</span> <i>Material</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i><abbr title="A dictionary containing user defined values">Extra</abbr></i>,
     <br>&emsp;),
     <br>&emsp;<span class="type">void</span> <i><abbr title="A callback which is invoked whenever the projectile is destroyed.">OnDestroyed</abbr></i> (
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i><abbr title="A dictionary containing user defined values">Extra</abbr></i>,
     <br>&emsp;),
     <br>&emsp;<span class="type">void</span> <i><abbr title="A callback which is invoked whenever the projectile intersects a player hitbox. (SERVER SIDE ONLY)">OnIntersection</abbr></i> (
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
@@ -615,6 +618,7 @@
         <br>&emsp;&emsp;<span class="type">string</span> <i>Part</i>,
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Victim</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i><abbr title="A dictionary containing user defined values">Extra</abbr></i>,
     <br>&emsp;),
 <br><span class="method">&#41;</span></p>
 <p>This type represents the way that projectiles should be defined within the system.<br>

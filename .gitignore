@@ -6,6 +6,7 @@
 *.rbxl
 *.rbxl.lock
 *.rbxmx
+*.rbxm
 
 # Testing Files
 src/client/move.client.lua

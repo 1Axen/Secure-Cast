@@ -581,7 +581,7 @@
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a>    <span class="n">OnIntersection</span> <span class="o">=</span> <span class="n">Bindable</span><span class="p">,</span>
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a><span class="p">}</span>
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="n">SecureCast</span><span class="p">.</span><span class="n">Cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="s2">&quot;Bullet&quot;</span><span class="p">,</span> <span class="n">Origin</span><span class="p">,</span> <span class="n">Direction</span><span class="p">,</span> <span class="nb">os.clock</span><span class="p">()</span> <span class="o">-</span> <span class="n">Latency</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="n">Modifier</span><span class="p">)</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a><span class="n">SecureCast</span><span class="p">.</span><span class="n">Cast</span><span class="p">(</span><span class="n">Player</span><span class="p">,</span> <span class="s2">&quot;Bullet&quot;</span><span class="p">,</span> <span class="n">Origin</span><span class="p">,</span> <span class="n">Direction</span><span class="p">,</span> <span class="n">Time</span><span class="p">,</span> <span class="kc">nil</span><span class="p">,</span> <span class="n">Modifier</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
 <div class="admonition danger">
 <p class="admonition-title">Danger</p>
@@ -616,8 +616,9 @@
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Direction</i>,
         <br>&emsp;&emsp;<span class="type">string</span> <i>Part</i>,
-        <br>&emsp;&emsp;<span class="type">Player</span> <i>Victim</i>,
+        <br>&emsp;&emsp;<span class="type">Player?</span> <i>Victim</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">Model?</span> <i>VictimCharacter</i>,
         <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i><abbr title="A dictionary containing user defined values">Extra</abbr></i>,
     <br>&emsp;),
 <br><span class="method">&#41;</span></p>

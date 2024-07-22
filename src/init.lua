@@ -58,7 +58,7 @@ function SecureCast.Initialize()
 
     if IS_SERVER then
         RunService.PostSimulation:Connect(function()
-            SnapshotsUtility.CreatePlayersSnapshot(os.clock())
+            SnapshotsUtility.CreatePlayersSnapshot(workspace:GetServerTimeNow())
         end)
     end
 end

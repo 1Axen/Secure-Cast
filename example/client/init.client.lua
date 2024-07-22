@@ -51,12 +51,13 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
 	local Origin = Head.Position
 	local Direction = (Mouse.Hit.Position - Origin).Unit
 	
-	SimulateEvent:FireServer(Origin, Direction, workspace:GetServerTimeNow())
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock())
+	local Time = workspace:GetServerTimeNow()
+	SimulateEvent:FireServer(Origin, Direction, Time)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time)
 end)
 
 SimulateEvent.OnClientEvent:Connect(function(Caster: Player, Type: string, Origin: Vector3, Direction: Vector3, PVInstance: PVInstance?, Modifer)
 	if Caster ~= Player then
-		SecureCast.Cast(Caster, Type, Origin, Direction, os.clock(), PVInstance, Modifer)
+		SecureCast.Cast(Caster, Type, Origin, Direction, workspace:GetServerTimeNow(), PVInstance, Modifer)
 	end
 end)

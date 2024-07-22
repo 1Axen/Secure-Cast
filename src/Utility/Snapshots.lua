@@ -27,7 +27,10 @@ local SNAPSHOT_LIFETIME = Settings.SnapshotLifetime
 
 local IS_SERVER = RunService:IsServer()
 
+type Character = Model
+
 export type Record = {
+	Player: Player?,
 	RigType: Enum.HumanoidRigType,
 	Parts: {CFrame},
 	Position: Vector3,
@@ -35,20 +38,21 @@ export type Record = {
 
 export type Snapshot = {
 	Time: number,
-	Grid: VoxelsUtility.Grid<Player>,
-	Records: {[Player]: Record},
+	Grid: VoxelsUtility.Grid<Character>,
+	Records: {[Character]: Record},
 }
 
 export type Orientations = {
-    [Player]: {
+    [Character]: {
         [string]: CFrame
     }
 }
 
 ---- Constants ----
 
-local Utility = {}
+local Module = {}
 local Snapshots: {Snapshot} = table.create(60)
+local Characters: Folder = workspace[Settings.CharacterFolder]
 
 ---- Variables ----
 
@@ -87,16 +91,21 @@ end
 
 ---- Public Functions ----
 
-function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFrame}?
+function Module.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFrame}?
 	assert(IS_SERVER, "Snapshots.GetPlayerAtTime should only be called on the server!")
+
+	local Character = Player.Character
+	if not Character then
+		return
+	end
 
     local Next, Previous, Fraction = GetSnapshotsAtTime(Time)
     if not Next or not Previous or not Fraction then
         return
     end
 
-    local NextRecord = Next.Records[Player]
-    local PreviousRecord = Previous.Records[Player]
+    local NextRecord = Next.Records[Character]
+    local PreviousRecord = Previous.Records[Character]
     if not NextRecord or not PreviousRecord then
         return
     end
@@ -111,7 +120,7 @@ function Utility.GetPlayerAtTime(Player: Player, Time: number): {[string]: CFram
     return Orientations
 end
 
-function Utility.GetPlayersAtTime(Time: number): Orientations?
+function Module.GetRecordsAtTime(Time: number): Orientations?
 	assert(IS_SERVER, "Snapshots.GetPlayersAtTime should only be called on the server!")
 
     local Next, Previous, Fraction = GetSnapshotsAtTime(Time)
@@ -120,8 +129,8 @@ function Utility.GetPlayersAtTime(Time: number): Orientations?
     end
 
     local Orientations: Orientations = {}
-    for Player, Record in Previous.Records do
-        local NextRecord = Next.Records[Player]
+    for Character, Record in Previous.Records do
+        local NextRecord = Next.Records[Character]
         if not NextRecord then
             continue
         end
@@ -129,7 +138,7 @@ function Utility.GetPlayersAtTime(Time: number): Orientations?
         local Parts = {}
 		local PartNames = PARTS[NextRecord.RigType].Names
         
-		Orientations[Player] = Parts
+		Orientations[Character] = Parts
 
         for Index, Orientation in Record.Parts do
             Parts[PartNames[Index]] = Orientation:Lerp(NextRecord.Parts[Index], Fraction)
@@ -139,32 +148,37 @@ function Utility.GetPlayersAtTime(Time: number): Orientations?
     return Orientations
 end
 
-function Utility.CreatePlayersSnapshot(Time: number)
+function Module.CreatePlayersSnapshot(Time: number)
     --> Create new snapshot
-	local Voxels: {[Player]: Vector3} = {}
-	local Records: {[Player]: Record} = {}
+	local Voxels: {[Character]: Vector3} = {}
+	local Records: {[Character]: Record} = {}
 
-	for _, Player in Players:GetPlayers() do
-		local Character = Player.Character
-
-		if not Character then
+	for _, Character: Character in Characters:GetChildren() :: {any} do
+		local Player = Players:FindFirstChild(Character.Name)
+		local Humanoid = Character:FindFirstChildWhichIsA("Humanoid") :: Humanoid
+		if not Humanoid or Humanoid.Health <= 0 then
 			continue
 		end
 
-		local RigType = Character.Humanoid.RigType :: Enum.HumanoidRigType
+		local RigType = Humanoid.RigType
 		local PartNames = PARTS[RigType].Names
+
+		local Root: BasePart? = Character.PrimaryPart or Character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if not Root then
+			warn(`Cannot build snapshot record for {Character.Name}, it has no root.`)
+			continue
+		end
 
 		local Parts = {}
 		local Record: Record = {
 			Parts = Parts,
-			RigType = RigType,
 			Player = Player,
-			Position = Character:GetPivot().Position,
+			RigType = RigType,
+			Position = Root.Position,
 		}
 		
 		for Index, Name in PartNames do
-			local Part: BasePart = Character:FindFirstChild(Name)
-
+			local Part: BasePart? = Character:FindFirstChild(Name) :: BasePart?
 			if Part then
 				Parts[Index] = Part.CFrame
 				continue
@@ -172,8 +186,8 @@ function Utility.CreatePlayersSnapshot(Time: number)
 		end
 
 		if #Parts == #PartNames then
-			Records[Player] = Record
-			Voxels[Player] = Record.Position
+			Voxels[Character] = Record.Position
+			Records[Character] = Record
 		end
 	end
 
@@ -189,15 +203,15 @@ function Utility.CreatePlayersSnapshot(Time: number)
 		local Snapshot = Snapshots[Index]
 		if (Time - Snapshot.Time) > SNAPSHOT_LIFETIME then
 			table.remove(Snapshots, Index)
-			ClearTable(Snapshot, true)
 		end
 	end
 end
 
-Utility.GetSnapshotsAtTime = GetSnapshotsAtTime
+Module.GetPlayersAtTime = Module.GetRecordsAtTime
+Module.GetSnapshotsAtTime = GetSnapshotsAtTime
 
 ---- Initialization ----
 
 ---- Connections ----
 
-return Utility
+return Module

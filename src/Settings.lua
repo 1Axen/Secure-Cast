@@ -15,6 +15,7 @@ return {
     --> Simulation (Do not touch these unless you know what you are doing!)
     Threads = 16, --> The maximum amount of CPU threads to allocate
     Interpolation = 0.048, --> The base amount of time in seconds it takes for ROBLOX characters to interpolate (this is a guess, no official numbers exist)
+    --> Use a value around 0.2 for NPC combat based games (zombie fighting etc.)
     ServerFrameRate = (1 / 60), --> The server frame rate (assume constant 60 FPS)
     RemianingFrameTimeRatio = 0.5, --> What percentage of the remaining frame time we can use to run the simulation.
 

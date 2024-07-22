@@ -5,9 +5,9 @@
 -- ******************************* --
 
 ---- Services ----
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
 local RunService = game:GetService("RunService")
 
 ---- Imports ----
@@ -32,15 +32,14 @@ local function OnDestroyed(Player: Player, Position: Vector3)
 	
 end
 
-local function OnIntersection(Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3)
-	local Character = Victim.Character
+local function OnIntersection(Player: Player, Direction: Vector3, Part: string, Victim: Player?, Position: Vector3, Character: Model, Extra: any)
 	local Humanoid: Humanoid? = Character and Character:FindFirstChild("Humanoid") :: Humanoid
 	if not Humanoid or Humanoid.Health <= 0 then
 		return
 	end
-	
-	Humanoid:TakeDamage(10) 
-	print(`Intersected {Victim}'s {Part}`)
+
+	Humanoid:TakeDamage(10)
+	print(`Intersected {Victim or Character}'s {Part}`)
 end
 
 ---- Projectile ----

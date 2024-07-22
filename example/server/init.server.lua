@@ -61,7 +61,6 @@ Players.PlayerAdded:Connect(function(Player: Player)
 end)
 
 ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player, Origin: Vector3, Direction: Vector3, Timestamp: number)
-	local Time = os.clock()
 	local Latency = (workspace:GetServerTimeNow() - Timestamp)
 	local Interpolation = (Player:GetNetworkPing() + SecureCast.Settings.Interpolation)
 	if (Latency < 0) or (Latency > MAXIMUM_LATENCY) then
@@ -83,5 +82,5 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
 	
 	--> WARNING: Make sure to replicate your modifier to the client as well or the simulation will desync
 	SimulateEvent:FireAllClients(Player, "Bullet", Origin, Direction, nil, Modifier)
-	SecureCast.Cast(Player, "Bullet", Origin, Direction, Time - Latency - Interpolation, nil, Modifier)
+	SecureCast.Cast(Player, "Bullet", Origin, Direction, Timestamp - Interpolation, nil, Modifier)
 end)

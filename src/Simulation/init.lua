@@ -45,10 +45,12 @@ RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude
 RAYCAST_PARAMS.FilterDescendantsInstances = {workspace:FindFirstChild(Settings.VisualsFolder)}
 
 type Extra = {[string]: any}
+type Character = Model
 
 export type Intersection = {
 	Part: string,
-	Player: Player,
+	Player: Player?,
+	Character: Character,
 	Position: Vector3,
 }
 
@@ -127,7 +129,7 @@ export type Definition = {
 	--> Called when the projectile is destroyed
 	OnDestroyed: (Player: Player, Position: Vector3, Extra: Extra) -> (),
 	--> Called whenever a player hitbox is intersected [SERVER SIDE ONLY]
-	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3, Extra: Extra) -> (), 
+	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player?, Position: Vector3, Character: Character, Extra: Extra) -> (), 
 }
 
 ---- Constants ----
@@ -185,13 +187,14 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 	local Length = Direction.Magnitude
 
 	--> Broadphase: Voxels Grid Traversal
-	local Results: {[Player]: boolean} = VoxelsUtility.TraverseVoxelGrid(Origin, Direction, PreviousSnapshot.Grid)
-	for Player in Results do
-		local NextRecord: SnapshotsUtility.Record = NextRecords[Player]
-		local PreviousRecord: SnapshotsUtility.Record = PreviousRecords[Player]
+	local Results: {[Character]: boolean} = VoxelsUtility.TraverseVoxelGrid(Origin, Direction, PreviousSnapshot.Grid)
+	for Character in Results do
+		local NextRecord: SnapshotsUtility.Record = NextRecords[Character]
+		local PreviousRecord: SnapshotsUtility.Record = PreviousRecords[Character]
 		
 		--> Avoid checking teammates
-		if IsPlayerFriendly(Caster, Player) then
+		local Player = NextRecord.Player or PreviousRecord.Player
+		if Player and IsPlayerFriendly(Caster, Player) then
 			continue
 		end
 		
@@ -226,7 +229,8 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 				return {
 					Part = NAMES[Index],
 					Player = Player,
-					Position = (Normalized * Intersection)
+					Character = Character,
+					Position = Origin + (Normalized * Intersection)
 				}
 			end
 		end
@@ -274,7 +278,7 @@ local function OnPostSimulation(deltaTime: number)
 
 	--> Take a snapshot of the latest player positions
 	if IS_SERVER then
-		SnapshotsUtility.CreatePlayersSnapshot(os.clock())
+		SnapshotsUtility.CreatePlayersSnapshot(workspace:GetServerTimeNow())
 	end
 	
 	--> Projectile callbacks need to be processed in serial execution in the main thread
@@ -433,6 +437,7 @@ local function OnPostSimulation(deltaTime: number)
 			Interesction.Part,
 			Interesction.Player,
 			Interesction.Position,
+			Interesction.Character,
 			Projectile.Extra
 		)
 	end

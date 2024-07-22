@@ -88,8 +88,9 @@ SecureCast.Cast(Player, "Bullet", Origin, Direction, Time, nil, Modifier)
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Direction</i>,
         <br>&emsp;&emsp;<span class="type">string</span> <i>Part</i>,
-        <br>&emsp;&emsp;<span class="type">Player</span> <i>Victim</i>,
+        <br>&emsp;&emsp;<span class="type">Player?</span> <i>Victim</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">Model?</span> <i>VictimCharacter</i>,
         <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i>Extra</i>,
     <br>&emsp;),
 <br><span class="method">&#41</span>

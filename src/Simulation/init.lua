@@ -42,6 +42,7 @@ local REMAINING_FRAME_TIME_RATIO = Settings.RemianingFrameTimeRatio
 
 local DRAW_HITBOXES = Settings.DrawHitboxes
 local HITBOX_LIFETIME = Settings.HitboxLifetime
+local ON_IMPACT_FALLBACK = Settings.OnImpactFallback
 
 local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude
@@ -155,6 +156,18 @@ local Projectiles: {[string]: Projectile} = {}
 local Definitions: {[string]: Definition} = {}
 
 ---- Private Functions ----
+
+local function GetCharacterFromDescendant(Descendant: Instance): Character
+	local Ancestor: Instance? = Descendant
+	local Character = Descendant
+
+	while Ancestor do
+		Ancestor = Ancestor:FindFirstAncestorOfClass("Model")
+		Character = Ancestor or Character
+	end
+
+	return Character :: Model
+end
 
 local function CloneRaycastFilter(RaycastFilter: RaycastParams): RaycastParams
 	local Clone = RaycastParams.new()
@@ -340,10 +353,7 @@ local function OnPostSimulation(deltaTime: number)
 				Intersection = RaycastPlayers(Caster, Origin, (RaycastPosition - Origin), Projectile.Timestamp + Time)
 				
 				if Intersection then
-					if not Projectile.Collaterals then
-						Destroy = true
-					end
-
+					Destroy = (not Projectile.Collaterals)
 					Intersected[Projectile] = Intersection
 				end
 			end
@@ -356,17 +366,28 @@ local function OnPostSimulation(deltaTime: number)
 				local SurfaceHardness = SURFACE_HARDNESS[RaycastResult.Material] or SURFACE_HARDNESS.Default
 				
 				--> Filter ally characters
-				if IS_CLIENT and Impact:IsDescendantOf(Characters) then
-					local Humanoid = Impact.Parent:FindFirstChild("Humanoid") or Impact.Parent.Parent:FindFirstChild("Humanoid")
-					local Character = Humanoid and Humanoid.Parent
+				if Impact:IsDescendantOf(Characters) then
+					local Character = GetCharacterFromDescendant(Impact)
 					local Victim = Character and Players:FindFirstChild(Character.Name)
-					if Victim then
-						if Victim.Team ~= Caster.Team and not Projectile.Collaterals then
-							Destroy = true
-						else
-							RaycastResult = nil --> Prevent OnImpact event
-							Projectile.RaycastFilter:AddToFilter(Character)
-						end
+					local CanDamageVictim = if Victim then not IsPlayerFriendly(Caster, Victim) else true
+
+					Projectile.IncludeFilter:AddToFilter(Character)
+					Projectile.RaycastFilter:AddToFilter(Character)
+					Destroy = (CanDamageVictim and not Projectile.Collaterals)
+
+					--> OnImpactFallback
+					if ON_IMPACT_FALLBACK and IS_SERVER and CanDamageVictim then
+						Intersected[Projectile] = {
+							Part = Impact,
+							Player = Victim,
+							Position = RaycastResult.Position,
+							Character = Character,
+						}
+						RaycastResult = nil
+					end
+
+					if not CanDamageVictim or not ON_IMPACT_FALLBACK then
+						RaycastResult = nil
 					end
 				--> Ricochet & Grenade bounce:
 				elseif (Projectile.Angle == FULL_CIRCLE) or (Projectile.Angle >= SurfaceAngle and SurfaceHardness >= RICOCHET_HARDNESS) then
@@ -543,7 +564,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 	local PlayerCollisions = false
 	
 	--> Remove character collisions from server filter
-	if IS_SERVER then
+	if IS_SERVER and not ON_IMPACT_FALLBACK then
 		local List = RaycastFilter.FilterDescendantsInstances
 		local Index = table.find(List, Characters)
 		if RaycastFilter.FilterType == Enum.RaycastFilterType.Include then

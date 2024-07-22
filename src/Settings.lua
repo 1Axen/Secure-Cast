@@ -5,7 +5,11 @@ return {
     --> WARNING: This uses thread synchronisation to draw the hitboxes, massively slowing down performance, DO NOT USE outside of debugging
     DrawHitboxes = false,
     HitboxLifetime = 1, 
-
+    
+    --> Experimental
+    --> !! DO NOT CHANGE UNLESS YOU KNOW EXACTLY WHAT YOU ARE DOING !!
+    OnImpactFallback = false,
+    
     --> Voxels
     VoxelSize = 32,
     VoxelGridSize = VoxelGridSize,

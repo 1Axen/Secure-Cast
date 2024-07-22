@@ -44,6 +44,8 @@ local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude
 RAYCAST_PARAMS.FilterDescendantsInstances = {workspace:FindFirstChild(Settings.VisualsFolder)}
 
+type Extra = {[string]: any}
+
 export type Intersection = {
 	Part: string,
 	Player: Player,
@@ -66,7 +68,7 @@ export type Modifier = {
 	OnIntersection: BindableEvent?,
 	RaycastFilter: RaycastParams?,
 
-	[string]: any,
+	Extra: Extra?
 }
 
 export type Projectile = {
@@ -103,6 +105,8 @@ export type Projectile = {
 	
 	Instance: PVInstance,
 	Orientation: Vector3,
+
+	Extra: Extra
 }
 
 export type Definition = {
@@ -119,11 +123,11 @@ export type Definition = {
 	RaycastFilter: RaycastParams?,
 	
 	--> Called when the projectile hits something in the world
-	OnImpact: (Player: Player, Direction: Vector3, Instance: Instance, Normal: Vector3, Position: Vector3, Material: Enum.Material) -> (), 
+	OnImpact: (Player: Player, Direction: Vector3, Instance: Instance, Normal: Vector3, Position: Vector3, Material: Enum.Material, Extra: Extra) -> (), 
 	--> Called when the projectile is destroyed
-	OnDestroyed: (Player: Player, Position: Vector3) -> (),
+	OnDestroyed: (Player: Player, Position: Vector3, Extra: Extra) -> (),
 	--> Called whenever a player hitbox is intersected [SERVER SIDE ONLY]
-	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3) -> (), 
+	OnIntersection: (Player: Player, Direction: Vector3, Part: string, Victim: Player, Position: Vector3, Extra: Extra) -> (), 
 }
 
 ---- Constants ----
@@ -137,10 +141,10 @@ local Simulation = {}
 
 ---- Variables ----
 
-local FrameStartTick;
+local FrameStartTick
 
-local Actor: Actor;
-local Bindable: BindableEvent;
+local Actor: Actor
+local Bindable: BindableEvent
 
 local Projectiles: {[string]: Projectile} = {}
 local Definitions: {[string]: Definition} = {}
@@ -157,7 +161,8 @@ local function CloneRaycastFilter(RaycastFilter: RaycastParams): RaycastParams
 end
 
 local function IncrementTasks(Amount: number)
-	Actor:SetAttribute("Tasks", Actor:GetAttribute("Tasks") + Amount)
+	local Tasks: number = Actor:GetAttribute("Tasks") :: number? or 0
+	Actor:SetAttribute("Tasks", Tasks + Amount)
 end
 
 local function IsPlayerFriendly(Caster: Player, Player: Player): boolean
@@ -311,7 +316,7 @@ local function OnPostSimulation(deltaTime: number)
 			local RaycastPosition = RaycastResult and RaycastResult.Position or (Origin + Direction)
 
 			--> Perform server-sided player hit detection
-			local Intersection: Intersection?;
+			local Intersection: Intersection?
 			if Projectile.PlayerCollisions then
 				--> We only need to check up to the raycast intersection
 				Intersection = RaycastPlayers(Caster, Origin, (RaycastPosition - Origin), Projectile.Timestamp + Time)
@@ -403,14 +408,33 @@ local function OnPostSimulation(deltaTime: number)
 	for Projectile, RaycastResult in Impacted do
 		local Output = Projectile.OnImpact or Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Output:Fire(Projectile.Type, "OnImpact", Projectile.Caster, Direction, RaycastResult.Instance, RaycastResult.Normal, RaycastResult.Position, RaycastResult.Material)
+		Output:Fire(
+			Projectile.Type, 
+			"OnImpact", 
+			Projectile.Caster, 
+			Direction, 
+			RaycastResult.Instance, 
+			RaycastResult.Normal, 
+			RaycastResult.Position, 
+			RaycastResult.Material, 
+			Projectile.Extra
+		)
 	end
 	
 	--> Process intersected:
 	for Projectile, Interesction in Intersected do
 		local Output = Projectile.OnIntersection or Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
-		Output:Fire(Projectile.Type, "OnIntersection", Projectile.Caster, Direction, Interesction.Part, Interesction.Player, Interesction.Position)
+		Output:Fire(
+			Projectile.Type,
+			"OnIntersection",
+			Projectile.Caster,
+			Direction,
+			Interesction.Part,
+			Interesction.Player,
+			Interesction.Position,
+			Projectile.Extra
+		)
 	end
 	
 	--> Process destroyed:
@@ -420,7 +444,13 @@ local function OnPostSimulation(deltaTime: number)
 		--> Only send events for owned projectiles
 		if Projectile.Caster.Parent == Players then
 			local Output = Projectile.OnDestroyed or Projectile.Output or Bindable
-			Output:Fire(Projectile.Type, "OnDestroyed", Projectile.Caster, Projectile.Position)
+			Output:Fire(
+				Projectile.Type, 
+				"OnDestroyed", 
+				Projectile.Caster, 
+				Projectile.Position, 
+				Projectile.Extra
+			)
 		end
 		
 		if IS_CLIENT then
@@ -502,7 +532,7 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 			table.insert(List, Characters)
 			RaycastFilter.FilterDescendantsInstances = List
 		end
-	end 
+	end
 	
 	--> Create projectile visual
 	PVInstance = IS_CLIENT and (PVInstance or ProjectileInstances:FindFirstChild(Type)) or nil
@@ -545,6 +575,8 @@ function Simulation.Simulate(Player: Player, Type: string, Origin: Vector3, Dire
 		--> Client rendering
 		Instance = PVInstance :: any,
 		Orientation = Vector3.new(),
+
+		Extra = if Modifier and Modifier.Extra then Modifier.Extra else {}
 	}
 end
 

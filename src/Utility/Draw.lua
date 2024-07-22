@@ -57,6 +57,10 @@ function Draw.setRandomColor()
 	Draw.setColor(Color3.fromHSV(math.random(), 0.5+0.5*math.random(), 1))
 end
 
+function Draw.temporary(instance: Instance, lifetime: number)
+	task.delay(lifetime, instance.Destroy, instance)
+end
+
 --[=[
 	Draws a ray for debugging.
 

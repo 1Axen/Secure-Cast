@@ -1,6 +1,11 @@
 local VoxelGridSize = Vector3.new(4096, 512, 4096)
 
 return {
+    --> Debug
+    --> WARNING: This uses thread synchronisation to draw the hitboxes, massively slowing down performance, DO NOT USE outside of debugging
+    DrawHitboxes = false,
+    HitboxLifetime = 1, 
+
     --> Voxels
     VoxelSize = 32,
     VoxelGridSize = VoxelGridSize,

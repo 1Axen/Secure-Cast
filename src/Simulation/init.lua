@@ -40,6 +40,9 @@ local RICOCHET_HARDNESS = Settings.RicochetHardness
 local SERVER_FRAME_RATE = Settings.ServerFrameRate
 local REMAINING_FRAME_TIME_RATIO = Settings.RemianingFrameTimeRatio
 
+local DRAW_HITBOXES = Settings.DrawHitboxes
+local HITBOX_LIFETIME = Settings.HitboxLifetime
+
 local RAYCAST_PARAMS = RaycastParams.new()
 RAYCAST_PARAMS.FilterType = Enum.RaycastFilterType.Exclude
 RAYCAST_PARAMS.FilterDescendantsInstances = {workspace:FindFirstChild(Settings.VisualsFolder)}
@@ -226,6 +229,17 @@ local function RaycastPlayers(Caster: Player, Origin: Vector3, Direction: Vector
 			)
 
 			if Intersection then
+				if DRAW_HITBOXES then
+					task.synchronize()
+
+					for Index, Rotation in PreviousRecord.Parts do
+						local Orientation = Rotation:Lerp(NextParts[Index], Fraction)
+						DrawUtility.temporary(DrawUtility.box(Orientation, SIZES[Index] * 2), HITBOX_LIFETIME)
+					end
+
+					task.desynchronize()
+				end
+
 				return {
 					Part = NAMES[Index],
 					Player = Player,
@@ -412,6 +426,16 @@ local function OnPostSimulation(deltaTime: number)
 	for Projectile, RaycastResult in Impacted do
 		local Output = Projectile.OnImpact or Projectile.Output or Bindable
 		local Direction = PhysicsUtility.GetVelocity(Projectile.Velocity, Projectile.Gravity, Projectile.Step)
+
+		if DRAW_HITBOXES and IS_CLIENT and RaycastResult.Instance:IsDescendantOf(Characters) then
+			local Character = RaycastResult.Instance.Parent :: Model
+			for Index, Child in Character:GetChildren() do
+				if Child:IsA("BasePart") then
+					DrawUtility.temporary(DrawUtility.box(Child.CFrame, Child.Size), HITBOX_LIFETIME)
+				end
+			end
+		end
+
 		Output:Fire(
 			Projectile.Type, 
 			"OnImpact", 

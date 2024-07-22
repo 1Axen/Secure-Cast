@@ -19,7 +19,10 @@ UserInputService.InputBegan:Connect(function(Input, GPE)
     local ProjectileModifier;
     if Character:GetAttribute("ExtraPenetration") then
         ProjectileModifier = {
-            Power = 200
+            Power = 200,
+            Extra = {
+                Weapon = "M16"
+            }
         }
     end
 
@@ -45,6 +48,9 @@ ReplicatedStorage.Events.Simulate.OnServerEvent:Connect(function(Player: Player,
     if Character:GetAttribute("ExtraPenetration") then
         ProjectileModifier = {
             Power = 200
+            Extra = {
+                Weapon = "M16"
+            }
         }
     end
 	

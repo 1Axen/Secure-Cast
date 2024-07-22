@@ -26,6 +26,7 @@ This page contains all types defined and used by SecureCast.
     <br>&emsp;<span class="type">BindableEvent?</span> <i>OnDestroyed</i>,
     <br>&emsp;<span class="type">BindableEvent?</span> <i>OnIntersection</i>,
     <br>&emsp;<span class="type">RaycastParams?</span> <i>RaycastFilter</i>,
+    <br>&emsp;<span class="type">{[string]: any}?</span> <i>Extra</i>,
 <br><span class="method">&#41</span>
 
 Modifiers are a powerful tool that allows you to define per cast functionality seperate from the base projectile definition.
@@ -76,10 +77,12 @@ SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, 
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Normal</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>,
         <br>&emsp;&emsp;<span class="type">Enum.Material</span> <i>Material</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i>Extra</i>,
     <br>&emsp;),
     <br>&emsp;<span class="type">void</span> <i>OnDestroyed</i> (
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i>Extra</i>,
     <br>&emsp;),
     <br>&emsp;<span class="type">void</span> <i>OnIntersection</i> (
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Caster</i>,
@@ -87,6 +90,7 @@ SecureCast.Cast(Player, "Bullet", Origin, Direction, os.clock() - Latency, nil, 
         <br>&emsp;&emsp;<span class="type">string</span> <i>Part</i>,
         <br>&emsp;&emsp;<span class="type">Player</span> <i>Victim</i>,
         <br>&emsp;&emsp;<span class="type">Vector3</span> <i>Position</i>
+        <br>&emsp;&emsp;<span class="type">{[string]: any}?</span> <i>Extra</i>,
     <br>&emsp;),
 <br><span class="method">&#41</span>
 
@@ -119,3 +123,4 @@ Refer to the template bullet included within the GitHub repository for an exampl
 *[OnImpact]: A callback which is invoked whenever the projectile hits something in the world.
 *[OnDestroyed]: A callback which is invoked whenever the projectile is destroyed.
 *[OnIntersection]: A callback which is invoked whenever the projectile intersects a player hitbox. (SERVER SIDE ONLY)
+*[Extra]: A dictionary containing user defined values

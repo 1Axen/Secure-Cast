@@ -11,7 +11,7 @@ All parts of the map must be a descendant of the `Map` folder. <br>
 All player characters must be paranted to the `Characters` folder.
 
 We will also need an `Events` folder within ReplicatedStorage.
-Add a RemoteEvent named `Simulation` under the `Events` folder.
+Add a RemoteEvent named `Simulate` under the `Events` folder.
 
 ---
 

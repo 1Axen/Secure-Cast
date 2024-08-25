@@ -1,10 +1,12 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local QuickSetup = {}
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Settings = require(script.Parent.Parent.Settings)
+local CHARACTER_FOLDER_NAME = Settings.CharacterFolder
 
-function QuickSetup:Run()
+function QuickSetup.Run()
     local Map = ReplicatedStorage:FindFirstChild("Map")
-    local Characters = ReplicatedStorage:FindFirstChild("Characters")
+    local Characters = ReplicatedStorage:FindFirstChild(CHARACTER_FOLDER_NAME)
     local Events = ReplicatedStorage:FindFirstChild("Events")
     local Simulate
     
@@ -28,14 +30,14 @@ function QuickSetup:Run()
 
     if Characters == nil then
         Characters = Instance.new("Folder")
-        Characters.Name = "Characters"
+        Characters.Name = CHARACTER_FOLDER_NAME
         Characters.Parent = workspace
     end
 
     -- Avoid name instance clashing
     local ERR_MSG = "Instance with expected name was found, but was the incorrect class!"
     assert(workspace.Map:IsA("Folder"), ERR_MSG)
-    assert(workspace.Characters:IsA("Folder"), ERR_MSG)
+    assert(workspace[CHARACTER_FOLDER_NAME]:IsA("Folder"), ERR_MSG)
     assert(ReplicatedStorage.Events:IsA("Folder"), ERR_MSG)
     assert(ReplicatedStorage.Events.Simulate:IsA("RemoteEvent"), ERR_MSG)
 end

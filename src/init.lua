@@ -20,11 +20,6 @@ local IS_SERVER = RunService:IsServer()
 
 export type Settings = typeof(Settings)
 
-local QuickSetupUtility = require(Utility.QuickSetup)
-local Dispatcher = require(script.Dispatcher)
-local Simulation = require(script.Simulation)
-local SnapshotsUtility = require(Utility.Snapshots)
-
 --> Ensure that a visuals folder exists
 do
     local Visuals = workspace:FindFirstChild(Settings.VisualsFolder)
@@ -34,6 +29,11 @@ do
         Folder.Parent = workspace
     end
 end
+
+local QuickSetupUtility = require(Utility.QuickSetup)
+local Dispatcher = require(script.Dispatcher)
+local Simulation = require(script.Simulation)
+local SnapshotsUtility = require(Utility.Snapshots)
 
 --> Optional quick setup
 do

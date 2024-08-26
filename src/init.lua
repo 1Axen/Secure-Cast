@@ -14,6 +14,12 @@ local Utility = script.Utility
 
 local Settings = require(script.Settings)
 
+---- Settings ----
+
+local IS_SERVER = RunService:IsServer()
+
+export type Settings = typeof(Settings)
+
 --> Ensure that a visuals folder exists
 do
     local Visuals = workspace:FindFirstChild(Settings.VisualsFolder)
@@ -24,15 +30,17 @@ do
     end
 end
 
+local QuickSetupUtility = require(Utility.QuickSetup)
 local Dispatcher = require(script.Dispatcher)
 local Simulation = require(script.Simulation)
 local SnapshotsUtility = require(Utility.Snapshots)
 
----- Settings ----
-
-local IS_SERVER = RunService:IsServer()
-
-export type Settings = typeof(Settings)
+--> Optional quick setup
+do
+    if Settings.EnableQuickSetup and IS_SERVER then
+        QuickSetupUtility.Run()
+    end
+end
 
 ---- Constants ----
 
